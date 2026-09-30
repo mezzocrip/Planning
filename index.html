@@ -2,7 +2,7 @@
 <html lang="fr" class="h-full bg-slate-50">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Emploi du Temps AED & Postes Vie Scolaire</title>
     <link rel="apple-touch-icon" href="./Logo.PNG">
 
@@ -23,11 +23,27 @@
         * {
             font-family: 'Inter', sans-serif;
             touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
 
+        /* Défilement fluide et rebond natif iOS/Android réactivé */
+        html, body, #desktop-matrix-wrapper, .custom-scrollbar {
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Style pour la mise en évidence d'une ligne d'heure cliquée */
+        tr.highlighted-row {
+            background-color: #fef08a !important; /* Jaune/Ambre clair */
+            transition: background-color 0.2s ease;
+        }
+        tr.highlighted-row td {
+            background-color: #fef08a !important;
+        }
+
+        /* Scrollbar moderne */
         .custom-scrollbar::-webkit-scrollbar {
-            height: 8px;
-            width: 8px;
+            height: 6px;
+            width: 6px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
             background: #f1f5f9;
@@ -41,9 +57,62 @@
             background: #94a3b8;
         }
 
-        /* Hauteur fixe constante pour chaque slot dans la grille */
+        /* Hauteur des lignes et ajustement vertical mobile */
         .slot-row {
-            height: 52px !important;
+            height: 48px !important;
+        }
+        .slot-row td {
+            height: 48px !important;
+        }
+
+        /* Ajustement dynamique à 95% pour laisser voir la ligne de séparation */
+        .mission-block {
+            height: calc(100% - 2px) !important;
+            margin: 1px 0;
+            box-sizing: border-box;
+        }
+
+        @media (max-width: 639px) {
+            .slot-row, .slot-row td {
+                height: 45px !important;
+            }
+            .mission-block {
+                padding: 2px 3px !important;
+                font-size: 10px !important;
+                line-height: 1.1 !important;
+            }
+        }
+
+        /* Safe Area Padding pour Mobile (iOS/Android) */
+        .pb-safe {
+            padding-bottom: env(safe-area-inset-bottom, 1rem);
+        }
+        .pt-safe {
+            padding-top: env(safe-area-inset-top, 0rem);
+        }
+
+        /* Hide scrollbars for slick mobile horizontal sliders */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* En-tête collant lors du scroll vertical */
+        .sticky-header-th {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            background-color: #f1f5f9;
+        }
+        .sticky-corner-th {
+            position: sticky;
+            top: 0;
+            left: 0;
+            z-index: 30;
+            background-color: #e2e8f0;
         }
 
         /* Optimization pour l'impression */
@@ -93,8 +162,7 @@
                 box-sizing: border-box !important;
             }
 
-            /* Fixation du positionnement des créneaux horaires à l'impression */
-            .slot-row {
+            .slot-row, .slot-row td {
                 height: 38px !important;
             }
 
@@ -105,7 +173,7 @@
                 box-shadow: none !important;
                 border-width: 1px !important;
                 border-radius: 4px !important;
-                height: 100% !important;
+                height: calc(100% - 2px) !important;
             }
 
             .print-page-break {
@@ -121,150 +189,197 @@
                 page-break-inside: avoid !important;
             }
 
-            /* Ajustement dynamique des colonnes */
-            th.min-w-\[180px\], td.min-w-\[180px\] {
+            th.min-w-\[120px\], td.min-w-\[120px\],
+            th.sm\:min-w-\[180px\], td.sm\:min-w-\[180px\] {
                 min-width: 0 !important;
             }
 
-            th.w-44, td.w-44 {
+            th.w-28, td.w-28, th.sm\:w-44, td.sm\:w-44 {
                 width: 110px !important;
                 min-width: 110px !important;
+            }
+
+            .mobile-only-view {
+                display: none !important;
+            }
+            .desktop-only-view {
+                display: table !important;
             }
         }
     </style>
 </head>
-<body class="h-full text-slate-800 flex flex-col min-h-screen">
+<body class="h-full text-slate-800 flex flex-col min-h-screen bg-slate-100/70 pb-20 sm:pb-0">
 
-    <header class="bg-indigo-700 text-white shadow-md no-print sticky top-0 z-30">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center py-3 gap-3">
-            <div class="flex items-center space-x-3">
-                <div class="p-2 bg-indigo-800 rounded-lg shadow-inner">
-                    <i class="fa-solid fa-users-gear text-2xl text-indigo-200"></i>
-                </div>
-                <div>
-                    <div class="flex items-center gap-2">
-                        <h1 class="text-xl font-bold tracking-tight">Vie Scolaire - Planning AED</h1>
-                        <span id="sync-status" class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 font-medium flex items-center gap-1">
-                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Firebase Synchro
-                        </span>
+    <!-- Top Header -->
+    <header class="bg-indigo-700 text-white shadow-lg no-print sticky top-0 z-40 pt-safe">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 flex flex-col gap-3 py-2 sm:py-3">
+            <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center space-x-2.5 sm:space-x-3">
+                    <div class="p-1.5 sm:p-2 bg-indigo-800/80 rounded-xl shadow-inner flex-shrink-0">
+                        <i class="fa-solid fa-users-gear text-lg sm:text-2xl text-indigo-200"></i>
                     </div>
-                    <p class="text-xs text-indigo-200">Grille des Créneaux & Répartition des Postes</p>
+                    <div>
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <h1 class="text-sm sm:text-xl font-extrabold tracking-tight">Vie Scolaire</h1>
+                            <span id="sync-status" class="text-[8px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 font-semibold flex items-center gap-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Direct
+                            </span>
+                        </div>
+                        <p class="text-[10px] sm:text-xs text-indigo-200 font-medium">Planning AED & Postes</p>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Navigation Tabs -->
-            <div class="flex bg-indigo-800/70 p-1 rounded-xl gap-1 overflow-x-auto max-w-full">
-                <button id="nav-grid-btn" onclick="switchMainTab('grid')" class="px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 bg-white text-indigo-800 shadow whitespace-nowrap">
-                    <i class="fa-solid fa-table-cells mr-1.5"></i>Grille du Jour
-                </button>
-                <button id="nav-aed-btn" onclick="switchMainTab('aed')" class="px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-indigo-100 hover:text-white hover:bg-indigo-600/50 transition-all duration-200 whitespace-nowrap">
-                    <i class="fa-solid fa-address-card mr-1.5"></i>Gestion AED & Contrats
-                </button>
-                <button id="nav-equity-btn" onclick="switchMainTab('equity')" class="px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-indigo-100 hover:text-white hover:bg-indigo-600/50 transition-all duration-200 whitespace-nowrap">
-                    <i class="fa-solid fa-scale-balanced mr-1.5"></i>Équilibre des Postes
-                </button>
-            </div>
-
-            <!-- Actions Bar -->
-            <div class="flex items-center gap-2">
-                <button onclick="openAEDModal()" class="bg-emerald-500 hover:bg-emerald-600 text-white text-xs sm:text-sm px-3.5 py-2 rounded-xl font-semibold shadow transition flex items-center gap-1.5">
-                    <i class="fa-solid fa-user-plus"></i>
-                    <span>+ Nouvel AED</span>
-                </button>
-
-                <div class="relative group">
-                    <button class="bg-indigo-800 hover:bg-indigo-600 text-white p-2 rounded-xl text-sm transition" title="Options">
-                        <i class="fa-solid fa-ellipsis-vertical"></i>
+                <!-- Desktop Navigation Tabs -->
+                <div class="hidden md:flex bg-indigo-800/70 p-1 rounded-xl gap-1">
+                    <button id="nav-grid-btn" onclick="switchMainTab('grid')" class="px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 bg-white text-indigo-800 shadow whitespace-nowrap">
+                        <i class="fa-solid fa-table-cells mr-1.5"></i>Grille du Jour
                     </button>
-                    <div class="absolute right-0 mt-1 w-56 bg-white rounded-xl shadow-xl py-2 z-50 hidden group-hover:block border border-slate-100 text-slate-700 text-sm">
-                        <button onclick="exportData()" class="w-full text-left px-4 py-2 hover:bg-slate-100 flex items-center gap-2">
-                            <i class="fa-solid fa-file-export text-indigo-600"></i> Exporter (JSON)
+                    <button id="nav-aed-btn" onclick="switchMainTab('aed')" class="px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-indigo-100 hover:text-white hover:bg-indigo-600/50 transition-all duration-200 whitespace-nowrap">
+                        <i class="fa-solid fa-address-card mr-1.5"></i>Gestion AED
+                    </button>
+                    <button id="nav-equity-btn" onclick="switchMainTab('equity')" class="px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-indigo-100 hover:text-white hover:bg-indigo-600/50 transition-all duration-200 whitespace-nowrap">
+                        <i class="fa-solid fa-scale-balanced mr-1.5"></i>Équilibre Postes
+                    </button>
+                </div>
+
+                <!-- Actions Bar -->
+                <div class="flex items-center gap-1.5 sm:gap-2">
+                    <button onclick="openAEDModal()" class="bg-emerald-500 hover:bg-emerald-600 text-white text-xs sm:text-sm px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl font-bold shadow transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-user-plus text-xs"></i>
+                        <span class="hidden sm:inline">+ Nouvel AED</span>
+                        <span class="sm:hidden">AED</span>
+                    </button>
+
+                    <!-- Dropdown Options -->
+                    <div class="relative group">
+                        <button class="bg-indigo-800/80 hover:bg-indigo-600 text-white p-1.5 sm:p-2 rounded-xl text-xs sm:text-sm transition" title="Options">
+                            <i class="fa-solid fa-ellipsis-vertical px-1"></i>
                         </button>
-                        <label class="w-full text-left px-4 py-2 hover:bg-slate-100 flex items-center gap-2 cursor-pointer">
-                            <i class="fa-solid fa-file-import text-indigo-600"></i> Importer (JSON)
-                            <input type="file" id="import-file" onchange="importData(event)" class="hidden" accept=".json">
-                        </label>
-                        <hr class="my-1 border-slate-100">
-                        <button onclick="triggerPrint('current')" class="w-full text-left px-4 py-2 hover:bg-slate-100 flex items-center gap-2 text-slate-700">
-                            <i class="fa-solid fa-print text-indigo-600"></i> Imprimer Jour Sélectionné
-                        </button>
-                        <button onclick="triggerPrint('all')" class="w-full text-left px-4 py-2 hover:bg-slate-100 flex items-center gap-2 text-slate-700">
-                            <i class="fa-solid fa-print text-emerald-600"></i> Imprimer Semaine Complète
-                        </button>
-                        <hr class="my-1 border-slate-100">
-                        <button onclick="resetData()" class="w-full text-left px-4 py-2 hover:bg-red-50 flex items-center gap-2 text-red-600">
-                            <i class="fa-solid fa-trash-can"></i> Réinitialiser
-                        </button>
+                        <div class="absolute right-0 mt-1 w-56 bg-white rounded-2xl shadow-2xl py-2 z-50 hidden group-hover:block border border-slate-100 text-slate-700 text-sm">
+                            <button onclick="exportData()" class="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2 font-medium">
+                                <i class="fa-solid fa-file-export text-indigo-600"></i> Exporter (JSON)
+                            </button>
+                            <label class="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2 cursor-pointer font-medium">
+                                <i class="fa-solid fa-file-import text-indigo-600"></i> Importer (JSON)
+                                <input type="file" id="import-file" onchange="importData(event)" class="hidden" accept=".json">
+                            </label>
+                            <hr class="my-1 border-slate-100">
+                            <button onclick="triggerPrint('current')" class="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2 text-slate-700 font-medium">
+                                <i class="fa-solid fa-print text-indigo-600"></i> Imprimer Jour
+                            </button>
+                            <button onclick="triggerPrint('all')" class="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2 text-slate-700 font-medium">
+                                <i class="fa-solid fa-print text-emerald-600"></i> Imprimer Semaine
+                            </button>
+                            <hr class="my-1 border-slate-100">
+                            <button onclick="resetData()" class="w-full text-left px-4 py-2 hover:bg-red-50 flex items-center gap-2 text-red-600 font-medium">
+                                <i class="fa-solid fa-trash-can"></i> Réinitialiser
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </header>
 
-    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col gap-6">
+    <!-- Bottom Mobile Navigation Bar -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200/80 shadow-lg z-40 pb-safe no-print">
+        <div class="grid grid-cols-3 h-12">
+            <button id="mobile-nav-grid-btn" onclick="switchMainTab('grid')" class="flex flex-col items-center justify-center gap-0.5 text-indigo-600 font-bold transition">
+                <i class="fa-solid fa-table-cells text-base"></i>
+                <span class="text-[9px]">Grille</span>
+            </button>
+            <button id="mobile-nav-aed-btn" onclick="switchMainTab('aed')" class="flex flex-col items-center justify-center gap-0.5 text-slate-500 font-medium transition">
+                <i class="fa-solid fa-address-card text-base"></i>
+                <span class="text-[9px]">AEDs</span>
+            </button>
+            <button id="mobile-nav-equity-btn" onclick="switchMainTab('equity')" class="flex flex-col items-center justify-center gap-0.5 text-slate-500 font-medium transition">
+                <i class="fa-solid fa-scale-balanced text-base"></i>
+                <span class="text-[9px]">Équité</span>
+            </button>
+        </div>
+    </nav>
 
-        <div id="toast" class="hidden fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 transition-opacity">
-            <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
-            <span id="toast-message" class="text-sm font-medium">Notification</span>
+    <!-- Main Content Area -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-2 sm:p-6 lg:p-8 flex flex-col gap-2 sm:gap-6">
+
+        <!-- Toast Notifications -->
+        <div id="toast" class="hidden fixed bottom-16 sm:bottom-6 right-3 sm:right-6 z-50 bg-slate-900/95 text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 backdrop-blur transition-all border border-slate-700/50">
+            <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400 text-base"></i>
+            <span id="toast-message" class="text-xs sm:text-sm font-semibold">Notification</span>
         </div>
 
         <!-- Section 1: Main Grid Schedule -->
-        <section id="section-grid" class="flex flex-col gap-4">
+        <section id="section-grid" class="flex flex-col gap-2 sm:gap-4">
             
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col md:flex-row items-center justify-between gap-4 no-print">
-                <div class="flex items-center gap-2">
-                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Jour :</span>
-                    <div class="flex flex-wrap gap-1.5" id="day-tabs"></div>
+            <!-- Controls Bar: Days Selector + Print Mode + CPE Constraints -->
+            <div class="bg-white p-2 sm:p-4 rounded-xl sm:rounded-2xl shadow-sm border border-slate-200/80 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-2 sm:gap-4 no-print">
+                <!-- Days Selector Scrollable horizontal on mobile -->
+                <div class="flex items-center justify-between sm:justify-start gap-1.5 overflow-x-auto no-scrollbar">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 hidden sm:inline">Jour:</span>
+                    <div class="flex gap-1 w-full sm:w-auto" id="day-tabs"></div>
                 </div>
 
-                <!-- Option d'impression dédiée -->
-                <div class="flex items-center gap-2 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-xl">
-                    <span class="text-xs font-bold text-indigo-900"><i class="fa-solid fa-print text-indigo-600 mr-1"></i> Impression :</span>
-                    <select id="print-mode-select" class="text-xs bg-white border border-indigo-200 rounded-lg px-2 py-1 font-semibold text-slate-700 focus:outline-none">
-                        <option value="current">Jour en cours uniquement</option>
-                        <option value="all">Tous les jours (Semaine complète)</option>
-                    </select>
-                    <button onclick="triggerPrintSelected()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-2.5 py-1 rounded-lg font-bold transition">
-                        Imprimer
-                    </button>
-                </div>
-
-                <!-- Regles CPE Minimale AED -->
-                <div class="flex flex-wrap items-center gap-4 bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl text-xs">
-                    <span class="font-bold text-slate-700 flex items-center gap-1">
-                        <i class="fa-solid fa-shield-halved text-indigo-600"></i> Contraintes CPE (Présence min.) :
-                    </span>
-                    <div class="flex items-center gap-2">
-                        <span>Matin (M1) :</span>
-                        <div class="flex items-center bg-white border border-slate-300 rounded-lg">
-                            <button onclick="changeCPEThreshold('minMorning', -1)" class="px-2 py-0.5 hover:bg-slate-100 font-bold text-slate-600">-</button>
-                            <span id="cpe-min-morning" class="px-2 font-extrabold text-indigo-700">4</span>
-                            <button onclick="changeCPEThreshold('minMorning', 1)" class="px-2 py-0.5 hover:bg-slate-100 font-bold text-slate-600">+</button>
-                        </div>
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                    <!-- Option d'impression dédiée -->
+                    <div class="hidden sm:flex items-center gap-2 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-xl">
+                        <span class="text-xs font-bold text-indigo-900"><i class="fa-solid fa-print text-indigo-600 mr-1"></i> Mode :</span>
+                        <select id="print-mode-select" class="text-xs bg-white border border-indigo-200 rounded-lg px-2 py-1 font-semibold text-slate-700 focus:outline-none">
+                            <option value="current">Jour uniquement</option>
+                            <option value="all">Semaine complète</option>
+                        </select>
+                        <button onclick="triggerPrintSelected()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-2.5 py-1 rounded-lg font-bold transition">
+                            Imprimer
+                        </button>
                     </div>
-                    <div id="cpe-evening-container" class="flex items-center gap-2">
-                        <span>Soir (S4) :</span>
-                        <div class="flex items-center bg-white border border-slate-300 rounded-lg">
-                            <button onclick="changeCPEThreshold('minEvening', -1)" class="px-2 py-0.5 hover:bg-slate-100 font-bold text-slate-600">-</button>
-                            <span id="cpe-min-evening" class="px-2 font-extrabold text-indigo-700">4</span>
-                            <button onclick="changeCPEThreshold('minEvening', 1)" class="px-2 py-0.5 hover:bg-slate-100 font-bold text-slate-600">+</button>
+
+                    <!-- Regles CPE Minimale AED -->
+                    <div class="flex items-center justify-between sm:justify-start gap-2 bg-slate-50 border border-slate-200/80 px-2.5 py-1 sm:py-2 rounded-xl text-xs">
+                        <span class="font-bold text-slate-700 flex items-center gap-1 text-[10px] sm:text-xs">
+                            <i class="fa-solid fa-shield-halved text-indigo-600"></i> Seuil CPE :
+                        </span>
+                        <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-1">
+                                <span class="text-[10px] sm:text-[11px] font-medium text-slate-500">Matin:</span>
+                                <div class="flex items-center bg-white border border-slate-300 rounded-lg shadow-sm">
+                                    <button onclick="changeCPEThreshold('minMorning', -1)" class="px-1.5 py-0.5 hover:bg-slate-100 font-bold text-slate-600 text-xs">-</button>
+                                    <span id="cpe-min-morning" class="px-1 font-extrabold text-indigo-700 text-xs">4</span>
+                                    <button onclick="changeCPEThreshold('minMorning', 1)" class="px-1.5 py-0.5 hover:bg-slate-100 font-bold text-slate-600 text-xs">+</button>
+                                </div>
+                            </div>
+                            <div id="cpe-evening-container" class="flex items-center gap-1">
+                                <span class="text-[10px] sm:text-[11px] font-medium text-slate-500">Soir:</span>
+                                <div class="flex items-center bg-white border border-slate-300 rounded-lg shadow-sm">
+                                    <button onclick="changeCPEThreshold('minEvening', -1)" class="px-1.5 py-0.5 hover:bg-slate-100 font-bold text-slate-600 text-xs">-</button>
+                                    <span id="cpe-min-evening" class="px-1.5 font-extrabold text-indigo-700 text-xs">4</span>
+                                    <button onclick="changeCPEThreshold('minEvening', 1)" class="px-1.5 py-0.5 hover:bg-slate-100 font-bold text-slate-600 text-xs">+</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Alert CPE Container -->
-            <div id="cpe-alerts-bar" class="hidden flex flex-col gap-2"></div>
+            <!-- Mobile View Switcher (Desktop Table vs Mobile Agenda) -->
+            <div class="sm:hidden flex items-center justify-between px-1 text-[11px] text-slate-500">
+                <span class="font-bold text-slate-700" id="mobile-view-title">Vue Grille (Complete)</span>
+                <button onclick="toggleMobileDisplayMode()" id="toggle-display-btn" class="text-indigo-600 font-bold bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-100 flex items-center gap-1">
+                    <i class="fa-solid fa-list-check"></i> Mode Liste
+                </button>
+            </div>
 
-            <!-- Conteneur d'affichage dynamique pour l'écran -->
-            <div id="screen-schedule-container" class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden flex flex-col print-full-width">
+            <!-- Alert CPE Container -->
+            <div id="cpe-alerts-bar" class="hidden flex flex-col gap-1.5"></div>
+
+            <!-- Screen Schedule Matrix Container -->
+            <div id="screen-schedule-container" class="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden flex flex-col print-full-width">
                 <div class="hidden print:block p-3 border-b-2 border-indigo-600 mb-2">
                     <h2 class="text-xl font-bold text-slate-900">Collège - Planning des Postes Vie Scolaire</h2>
                     <p id="print-day-title" class="text-base font-semibold text-indigo-700">Jour : Lundi</p>
                 </div>
 
-                <div class="overflow-x-auto custom-scrollbar max-w-full">
-                    <table class="w-full border-collapse text-left text-sm" id="schedule-matrix-table">
+                <!-- Desktop / Mobile Matrix View (Vue complète optimisée verticalement sans défilement sur mobile) -->
+                <div id="desktop-matrix-wrapper" class="overflow-x-auto overflow-y-auto max-h-[82vh] custom-scrollbar max-w-full">
+                    <table class="w-full border-collapse text-left text-xs sm:text-sm" id="schedule-matrix-table">
                         <thead>
                             <tr class="bg-slate-100/80 text-slate-700 border-b border-slate-200" id="matrix-header-row"></tr>
                         </thead>
@@ -272,12 +387,15 @@
                     </table>
                 </div>
 
-                <div id="no-aed-warning" class="hidden p-12 text-center flex flex-col items-center justify-center gap-3">
-                    <div class="w-16 h-16 bg-indigo-50 text-indigo-500 rounded-full flex items-center justify-center text-2xl">
+                <!-- Mobile Card Agenda View (Alternative) -->
+                <div id="mobile-cards-wrapper" class="hidden p-2 flex-col gap-3"></div>
+
+                <div id="no-aed-warning" class="hidden p-6 sm:p-12 text-center flex flex-col items-center justify-center gap-2">
+                    <div class="w-10 h-10 sm:w-14 sm:h-14 bg-indigo-50 text-indigo-500 rounded-full flex items-center justify-center text-lg sm:text-xl">
                         <i class="fa-solid fa-user-slash"></i>
                     </div>
-                    <h3 class="text-lg font-semibold text-slate-800">Aucun AED présent ce jour-là</h3>
-                    <p class="text-sm text-slate-500 max-w-md">Personne n'a de créneau de travail planifié pour cette journée.</p>
+                    <h3 class="text-sm sm:text-lg font-bold text-slate-800">Aucun AED présent ce jour-là</h3>
+                    <p class="text-xs sm:text-sm text-slate-500 max-w-md">Personne n'a de créneau de travail planifié pour cette journée.</p>
                 </div>
             </div>
 
@@ -287,37 +405,37 @@
         </section>
 
         <!-- Section 2: AED Management & Contracts -->
-        <section id="section-aed" class="hidden flex flex-col gap-6 no-print">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <section id="section-aed" class="hidden flex flex-col gap-4 sm:gap-6 no-print">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>
-                    <h2 class="text-xl font-bold text-slate-800">Gestion de l'Équipe AED</h2>
-                    <p class="text-sm text-slate-500">Gérez les contrats, le statut étudiant et vérifiez le volume réel d'heures de présence.</p>
+                    <h2 class="text-lg sm:text-xl font-bold text-slate-800">Équipe Vie Scolaire & Contrats</h2>
+                    <p class="text-xs sm:text-sm text-slate-500">Gérez le personnel, le statut étudiant et suivez le quota horaire.</p>
                 </div>
-                <button onclick="openAEDModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-4 py-2.5 rounded-xl font-semibold shadow transition flex items-center gap-2">
+                <button onclick="openAEDModal()" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm px-4 py-2.5 rounded-xl font-bold shadow transition flex items-center justify-center gap-2">
                     <i class="fa-solid fa-plus"></i> Ajouter un AED
                 </button>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="aed-cards-container"></div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5" id="aed-cards-container"></div>
         </section>
 
-        <!-- Section 3: Equity and Task Distribution Dashboard -->
-        <section id="section-equity" class="hidden flex flex-col gap-6 no-print">
-            <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <!-- Section 3: Equity Dashboard -->
+        <section id="section-equity" class="hidden flex flex-col gap-4 sm:gap-6 no-print">
+            <div class="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
                 <div>
-                    <div class="flex items-center gap-2 text-indigo-600 font-bold uppercase text-xs tracking-wider mb-1">
-                        <i class="fa-solid fa-scale-balanced"></i> Module d'Équité Vie Scolaire
+                    <div class="flex items-center gap-2 text-indigo-600 font-bold uppercase text-[11px] tracking-wider mb-1">
+                        <i class="fa-solid fa-scale-balanced"></i> Module d'Équité
                     </div>
-                    <h2 class="text-xl font-bold text-slate-800">Équilibre & Répartition de l'ensemble des Postes</h2>
-                    <p class="text-sm text-slate-500">Analyse complète de tous les postes attribués.</p>
+                    <h2 class="text-lg sm:text-xl font-bold text-slate-800">Équilibre & Répartition des Postes</h2>
+                    <p class="text-xs sm:text-sm text-slate-500">Analyse globale et cumulée des affectations.</p>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
                 <!-- Task Breakdown Table -->
-                <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 flex flex-col gap-4">
-                    <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
-                        <i class="fa-solid fa-chart-column text-indigo-600"></i> Cumul Hebdomadaire par Poste & par AED
+                <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 shadow-sm p-4 sm:p-5 flex flex-col gap-4">
+                    <h3 class="font-bold text-slate-800 text-sm sm:text-base flex items-center gap-2">
+                        <i class="fa-solid fa-chart-column text-indigo-600"></i> Cumul Hebdomadaire par Poste
                     </h3>
                     <div class="overflow-x-auto custom-scrollbar">
                         <table class="w-full text-xs text-left border-collapse" id="equity-table">
@@ -330,9 +448,9 @@
                 </div>
 
                 <!-- Equity Analysis Diagnostics -->
-                <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 flex flex-col gap-4">
-                    <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
-                        <i class="fa-solid fa-shield-heart text-emerald-600"></i> Diagnostics de Répartition
+                <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-4 sm:p-5 flex flex-col gap-4">
+                    <h3 class="font-bold text-slate-800 text-sm sm:text-base flex items-center gap-2">
+                        <i class="fa-solid fa-shield-heart text-emerald-600"></i> Diagnostics
                     </h3>
                     <div id="equity-alerts-container" class="flex flex-col gap-3 text-xs"></div>
                 </div>
@@ -342,27 +460,27 @@
     </main>
 
     <!-- Modal: AED Edit / Add -->
-    <div id="aed-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto no-print">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full my-8 overflow-hidden transform transition-all">
-            <div class="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-                <h3 id="aed-modal-title" class="font-bold text-slate-800 text-lg">Ajouter un AED</h3>
-                <button onclick="closeAEDModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
-                    <i class="fa-solid fa-xmark text-lg"></i>
+    <div id="aed-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto no-print">
+        <div class="bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] sm:max-h-[85vh] flex flex-col overflow-hidden transform transition-all">
+            <div class="bg-slate-50 px-5 py-4 border-b border-slate-100 flex justify-between items-center">
+                <h3 id="aed-modal-title" class="font-bold text-slate-800 text-base sm:text-lg">Ajouter un AED</h3>
+                <button onclick="closeAEDModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl bg-slate-200/50">
+                    <i class="fa-solid fa-xmark text-base"></i>
                 </button>
             </div>
             
-            <form id="aed-form" onsubmit="saveAED(event)" class="p-6 flex flex-col gap-5 max-h-[80vh] overflow-y-auto custom-scrollbar">
+            <form id="aed-form" onsubmit="saveAED(event)" class="p-4 sm:p-6 flex flex-col gap-4 sm:gap-5 overflow-y-auto custom-scrollbar flex-1">
                 <input type="hidden" id="aed-id">
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Nom / Prénom</label>
-                        <input type="text" id="aed-name" required placeholder="ex: Thomas DUBOIS" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                        <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Nom / Prénom</label>
+                        <input type="text" id="aed-name" required placeholder="ex: Thomas DUBOIS" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-semibold">
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Base Contrat</label>
-                        <select id="aed-contract" onchange="updateContractHoursPreview()" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white">
+                        <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Base Contrat</label>
+                        <select id="aed-contract" onchange="updateContractHoursPreview()" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-semibold bg-white">
                             <option value="100">100% - Temps Plein</option>
                             <option value="75">75% - Temps Partiel</option>
                             <option value="50">50% - Mi-temps</option>
@@ -371,51 +489,51 @@
                 </div>
 
                 <!-- Student Checkbox & Custom Contract Hours -->
-                <div class="bg-amber-50/70 border border-amber-200/80 p-4 rounded-xl flex flex-col gap-3">
+                <div class="bg-amber-50/70 border border-amber-200/80 p-3.5 sm:p-4 rounded-xl flex flex-col gap-3">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
                             <input type="checkbox" id="aed-is-student" onchange="toggleStudentStatus()" class="w-4 h-4 text-amber-600 rounded focus:ring-amber-500">
                             <label for="aed-is-student" class="text-xs font-bold text-amber-900 cursor-pointer flex items-center gap-1.5">
-                                <i class="fa-solid fa-graduation-cap text-amber-600"></i> Statut Étudiant (Ajustement de Crédit d'Heures)
+                                <i class="fa-solid fa-graduation-cap text-amber-600"></i> Statut Étudiant (Crédit d'Heures)
                             </label>
                         </div>
                     </div>
                     
-                    <div id="student-hours-container" class="hidden flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2 border-t border-amber-200/60">
-                        <span class="text-xs text-amber-800">Quota horaire hebdo spécifique :</span>
+                    <div id="student-hours-container" class="hidden flex flex-row items-center justify-between gap-3 pt-2 border-t border-amber-200/60">
+                        <span class="text-xs text-amber-800 font-medium">Quota hebdo spécifique :</span>
                         <div class="flex items-center gap-2">
-                            <input type="number" id="aed-custom-hours" step="0.5" min="1" max="50" class="w-20 px-2.5 py-1.5 border border-amber-300 rounded-lg text-xs font-bold text-slate-800">
-                            <span class="text-xs font-semibold text-amber-900">heures / semaine</span>
+                            <input type="number" id="aed-custom-hours" step="0.5" min="1" max="50" class="w-20 px-2.5 py-1.5 border border-amber-300 rounded-lg text-xs font-bold text-slate-800 text-center">
+                            <span class="text-xs font-bold text-amber-900">heures/sem.</span>
                         </div>
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Couleur d'identification</label>
+                    <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Couleur d'identification</label>
                     <div class="flex items-center gap-3">
-                        <input type="color" id="aed-color" value="#4f46e5" class="h-10 w-16 p-1 rounded-lg border border-slate-300 cursor-pointer">
-                        <span class="text-xs text-slate-500">Identifies la colonne et les blocs d'interventions.</span>
+                        <input type="color" id="aed-color" value="#4f46e5" class="h-10 w-16 p-1 rounded-xl border border-slate-300 cursor-pointer">
+                        <span class="text-xs text-slate-500 font-medium">Identifies les blocs sur le planning.</span>
                     </div>
                 </div>
 
-                <!-- Daily Presence Hours Section with Split Hours Support -->
-                <div class="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 flex flex-col gap-3">
+                <!-- Daily Presence Hours Section -->
+                <div class="bg-indigo-50/50 p-3.5 sm:p-4 rounded-xl border border-indigo-100 flex flex-col gap-3">
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-bold uppercase text-indigo-900 tracking-wide flex items-center gap-1.5">
-                            <i class="fa-solid fa-clock text-indigo-600"></i> Horaires de Présence Quotidienne
+                            <i class="fa-solid fa-clock text-indigo-600"></i> Horaires de Présence
                         </span>
-                        <span class="text-[11px] text-indigo-600 italic">Un seul créneau ou deux créneaux par jour</span>
+                        <span class="text-[10px] text-indigo-600 italic">Créneaux quotidiens</span>
                     </div>
 
-                    <div class="space-y-3" id="presence-days-container"></div>
+                    <div class="space-y-2.5" id="presence-days-container"></div>
                 </div>
 
-                <div class="flex justify-end gap-3 pt-2 border-t border-slate-100">
-                    <button type="button" onclick="closeAEDModal()" class="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100">
+                <div class="flex justify-end gap-2.5 pt-3 border-t border-slate-100 mt-auto">
+                    <button type="button" onclick="closeAEDModal()" class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100">
                         Annuler
                     </button>
-                    <button type="submit" class="px-5 py-2 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md">
-                        Enregistrer l'AED
+                    <button type="submit" class="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md">
+                        Enregistrer
                     </button>
                 </div>
             </form>
@@ -423,81 +541,81 @@
     </div>
 
     <!-- Modal: Post Assignment -->
-    <div id="mission-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 no-print">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden transform transition-all">
-            <div class="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+    <div id="mission-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 no-print">
+        <div class="bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden transform transition-all max-h-[90vh] flex flex-col">
+            <div class="bg-slate-50 px-5 py-4 border-b border-slate-100 flex justify-between items-center">
                 <div>
-                    <h3 class="font-bold text-slate-800 text-lg">Affectation de Poste</h3>
-                    <p id="mission-modal-subtitle" class="text-xs text-slate-500">Lundi • AED</p>
+                    <h3 class="font-bold text-slate-800 text-base sm:text-lg">Affectation de Poste</h3>
+                    <p id="mission-modal-subtitle" class="text-xs text-slate-500 font-medium">Lundi • AED</p>
                 </div>
-                <button onclick="closeMissionModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
-                    <i class="fa-solid fa-xmark text-lg"></i>
+                <button onclick="closeMissionModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl bg-slate-200/50">
+                    <i class="fa-solid fa-xmark text-base"></i>
                 </button>
             </div>
 
-            <form id="mission-form" onsubmit="saveMission(event)" class="p-6 flex flex-col gap-4">
+            <form id="mission-form" onsubmit="saveMission(event)" class="p-4 sm:p-6 flex flex-col gap-4 overflow-y-auto">
                 <input type="hidden" id="mission-day">
                 <input type="hidden" id="mission-aed-id">
                 <input type="hidden" id="mission-id">
 
-                <div class="bg-indigo-50/60 p-4 rounded-xl border border-indigo-100 flex flex-col gap-3">
+                <div class="bg-indigo-50/60 p-3.5 rounded-xl border border-indigo-100 flex flex-col gap-2.5">
                     <label class="text-xs font-bold uppercase text-indigo-900 tracking-wide flex items-center gap-1.5">
-                        <i class="fa-solid fa-layer-group text-indigo-600"></i> Plage de créneaux couverte
+                        <i class="fa-solid fa-layer-group text-indigo-600"></i> Plage de créneaux
                     </label>
                     
-                    <div class="grid grid-cols-2 gap-3">
+                    <div class="grid grid-cols-2 gap-2.5">
                         <div>
-                            <span class="text-xs text-slate-600 mb-1 block font-medium">Début</span>
-                            <select id="mission-start-slot" onchange="handleSlotRangeChange()" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white font-medium"></select>
+                            <span class="text-[11px] text-slate-600 mb-1 block font-medium">Début</span>
+                            <select id="mission-start-slot" onchange="handleSlotRangeChange()" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs sm:text-sm bg-white font-semibold"></select>
                         </div>
                         <div>
-                            <span class="text-xs text-slate-600 mb-1 block font-medium">Fin</span>
-                            <select id="mission-end-slot" onchange="handleSlotRangeChange()" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white font-medium"></select>
+                            <span class="text-[11px] text-slate-600 mb-1 block font-medium">Fin</span>
+                            <select id="mission-end-slot" onchange="handleSlotRangeChange()" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs sm:text-sm bg-white font-semibold"></select>
                         </div>
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold uppercase text-slate-500 mb-1.5">Choix du Poste / Mission</label>
-                    <select id="mission-type" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-semibold bg-white"></select>
+                    <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1.5">Choix du Poste / Mission</label>
+                    <select id="mission-type" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-xs sm:text-sm font-bold bg-white"></select>
                 </div>
 
-                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200/80 flex flex-col gap-3">
+                <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200/80 flex flex-col gap-2.5">
                     <div class="flex items-center justify-between">
                         <label class="text-xs font-bold text-slate-700">Horaires exacts du poste</label>
-                        <button type="button" onclick="resetSlotTimes()" class="text-xs text-indigo-600 hover:underline">
+                        <button type="button" onclick="resetSlotTimes()" class="text-xs text-indigo-600 font-bold hover:underline">
                             Réinitialiser
                         </button>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-3">
+                    <div class="grid grid-cols-2 gap-2.5">
                         <div>
-                            <span class="text-xs text-slate-500 mb-1 block">Heure début</span>
-                            <input type="time" id="mission-start-time" required class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm font-semibold">
+                            <span class="text-[10px] text-slate-500 mb-1 block font-medium">Début</span>
+                            <input type="time" id="mission-start-time" required class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs sm:text-sm font-bold">
                         </div>
                         <div>
-                            <span class="text-xs text-slate-500 mb-1 block">Heure fin</span>
-                            <input type="time" id="mission-end-time" required class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm font-semibold">
+                            <span class="text-[10px] text-slate-500 mb-1 block font-medium">Fin</span>
+                            <input type="time" id="mission-end-time" required class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs sm:text-sm font-bold">
                         </div>
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Notes / Instructions (Optionnel)</label>
-                    <input type="text" id="mission-notes" placeholder="ex: Remplacement, clefs portail, consigne..." class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm">
+                    <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Notes / Instructions</label>
+                    <input type="text" id="mission-notes" placeholder="ex: Consignes, badges..." class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs sm:text-sm">
                 </div>
 
-                <div class="flex items-center justify-between mt-4 pt-4 border-t border-slate-100">
-                    <button type="button" onclick="deleteMission()" id="btn-delete-mission" class="px-3.5 py-2 rounded-xl text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 transition flex items-center gap-1.5">
+                <div class="flex items-center justify-between mt-2 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="deleteMission()" id="btn-delete-mission" class="px-3 py-2 rounded-xl text-xs sm:text-sm font-bold text-red-600 bg-red-50 hover:bg-red-100 transition flex items-center gap-1.5">
                         <i class="fa-solid fa-trash-can"></i> Effacer
                     </button>
                     
                     <div class="flex gap-2">
-                        <button type="button" onclick="closeMissionModal()" class="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100">
+                        <button type="button" onclick="closeMissionModal()" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100">
                             Annuler
                         </button>
-                        <button type="submit" class="px-5 py-2 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md">
-                            Enregistrer le poste
+                        <button type="submit" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md">
+                            Enregistrer
                         </button>
                     </div>
                 </div>
@@ -523,29 +641,22 @@
 
         const DAYS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'];
 
-        // Fonction déterminant le nom du jour actuel de la semaine
         function getCurrentDayName() {
-            const daysMap = {
-                1: 'Lundi',
-                2: 'Mardi',
-                3: 'Mercredi',
-                4: 'Jeudi',
-                5: 'Vendredi'
-            };
-            const currentDayIndex = new Date().getDay(); // 0 = Dimanche, 1 = Lundi, ..., 6 = Samedi
-            return daysMap[currentDayIndex] || 'Lundi'; // Par défaut Lundi durant le week-end
+            const daysMap = { 1: 'Lundi', 2: 'Mardi', 3: 'Mercredi', 4: 'Jeudi', 5: 'Vendredi' };
+            const currentDayIndex = new Date().getDay();
+            return daysMap[currentDayIndex] || 'Lundi';
         }
 
         const SLOTS = [
             { id: 'M1', label: 'M1', start: '08:00', end: '09:00', type: 'cours' },
             { id: 'M2', label: 'M2', start: '09:00', end: '10:10', type: 'cours' },
-            { id: 'RECRE_M', label: 'Récré Matin', start: '10:10', end: '10:25', type: 'recre' },
+            { id: 'RECRE_M', label: 'Récré M', start: '10:10', end: '10:25', type: 'recre' },
             { id: 'M3', label: 'M3', start: '10:25', end: '11:20', type: 'cours' },
             { id: 'M4', label: 'M4', start: '11:20', end: '12:15', type: 'cours' },
             { id: 'MERIDIENNE', label: 'Méridienne', start: '12:15', end: '13:25', type: 'pause' },
             { id: 'S1', label: 'S1', start: '13:25', end: '14:25', type: 'cours' },
             { id: 'S2', label: 'S2', start: '14:25', end: '15:25', type: 'cours' },
-            { id: 'RECRE_S', label: 'Récré A-M', start: '15:25', end: '15:40', type: 'recre' },
+            { id: 'RECRE_S', label: 'Récré S', start: '15:25', end: '15:40', type: 'recre' },
             { id: 'S3', label: 'S3', start: '15:40', end: '16:35', type: 'cours' },
             { id: 'S4', label: 'S4', start: '16:35', end: '17:35', type: 'cours' }
         ];
@@ -572,6 +683,7 @@
         const CONTRACT_HOURS = { '100': 40, '75': 30, '50': 20 };
 
         let isInitialLoad = true;
+        let isMobileGridView = true; // Mode Grille activé par défaut sur mobile
 
         let appState = {
             currentDay: getCurrentDayName(),
@@ -579,6 +691,13 @@
             aeds: [],
             missions: []
         };
+
+        function toggleRowHighlight(rowId) {
+            const row = document.getElementById(rowId);
+            if (row) {
+                row.classList.toggle('highlighted-row');
+            }
+        }
 
         function initCpeConstraints() {
             if (!appState.cpeConstraints || typeof appState.cpeConstraints.minMorning !== 'undefined') {
@@ -613,7 +732,6 @@
                 .replace(/'/g, "&#039;");
         }
 
-        // Sauvegarde synchrone vers Firebase et backup localStorage
         function saveState() {
             try {
                 localStorage.setItem('aed_timetable_app_v5', JSON.stringify(appState));
@@ -625,7 +743,6 @@
             }
         }
 
-        // Écoute en temps réel de Firebase Realtime Database
         function initFirebaseSync() {
             planningRef.on('value', (snapshot) => {
                 const data = snapshot.val();
@@ -774,6 +891,10 @@
             const aedBtn = document.getElementById('nav-aed-btn');
             const equityBtn = document.getElementById('nav-equity-btn');
 
+            const mGridBtn = document.getElementById('mobile-nav-grid-btn');
+            const mAedBtn = document.getElementById('mobile-nav-aed-btn');
+            const mEquityBtn = document.getElementById('mobile-nav-equity-btn');
+
             gridSec.classList.add('hidden');
             aedSec.classList.add('hidden');
             equitySec.classList.add('hidden');
@@ -785,17 +906,27 @@
             aedBtn.className = inactiveClass;
             equityBtn.className = inactiveClass;
 
+            const mInactive = "flex flex-col items-center justify-center gap-0.5 text-slate-500 font-medium transition";
+            const mActive = "flex flex-col items-center justify-center gap-0.5 text-indigo-600 font-bold transition";
+
+            mGridBtn.className = mInactive;
+            mAedBtn.className = mInactive;
+            mEquityBtn.className = mInactive;
+
             if (tab === 'grid') {
                 gridSec.classList.remove('hidden');
                 gridBtn.className = activeClass;
+                mGridBtn.className = mActive;
                 renderMatrix();
             } else if (tab === 'aed') {
                 aedSec.classList.remove('hidden');
                 aedBtn.className = activeClass;
+                mAedBtn.className = mActive;
                 renderAEDCards();
             } else if (tab === 'equity') {
                 equitySec.classList.remove('hidden');
                 equityBtn.className = activeClass;
+                mEquityBtn.className = mActive;
                 renderEquityDashboard();
             }
         }
@@ -805,8 +936,8 @@
             container.innerHTML = DAYS.map(day => {
                 const isActive = appState.currentDay === day;
                 return `
-                    <button onclick="selectDay('${day}')" class="px-3 py-1.5 rounded-xl font-medium text-xs sm:text-sm transition-all duration-150 ${
-                        isActive ? 'bg-indigo-600 text-white shadow-md font-semibold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    <button onclick="selectDay('${day}')" class="flex-1 sm:flex-none px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl text-[11px] sm:text-xs font-bold transition-all duration-150 whitespace-nowrap ${
+                        isActive ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                     }">
                         ${day}
                     </button>
@@ -891,8 +1022,9 @@
                 return '<div class="p-8 text-center text-slate-500 font-medium">Aucun AED de service ce jour-là.</div>';
             }
 
+            // En-tête avec positionnement sticky
             let headerHTML = `
-                <th class="p-3 w-44 bg-slate-200/80 font-bold text-slate-700 uppercase tracking-wider text-xs border-r border-slate-300 sticky left-0 z-20 shadow-sm">
+                <th class="p-1 sm:p-3 w-20 sm:w-44 sticky-corner-th font-bold text-slate-700 uppercase tracking-wider text-[9px] sm:text-xs border-r border-b border-slate-300 shadow-sm">
                     Créneaux / AED
                 </th>
             `;
@@ -903,13 +1035,13 @@
                 if (dayP.split && dayP.start2) presenceText += ` / ${dayP.start2}-${dayP.end2}`;
 
                 headerHTML += `
-                    <th class="p-2 min-w-[180px] font-bold border-r border-slate-200 text-center">
-                        <div class="flex items-center justify-center gap-1.5 flex-wrap">
-                            <span class="w-3 h-3 rounded-full inline-block shadow-sm" style="background-color: ${aed.color}"></span>
-                            <span class="text-slate-900 font-bold text-sm tracking-wide">${escapeHtml(aed.name)}</span>
+                    <th class="p-1 sm:p-2 min-w-[90px] sm:min-w-[180px] font-bold border-r border-b border-slate-300 text-center sticky-header-th shadow-sm">
+                        <div class="flex items-center justify-center gap-1 sm:gap-1.5 flex-wrap">
+                            <span class="w-2 h-2 sm:w-3 sm:h-3 rounded-full inline-block shadow-sm" style="background-color: ${aed.color}"></span>
+                            <span class="text-slate-900 font-extrabold text-[11px] sm:text-sm tracking-tight truncate max-w-[80px] sm:max-w-none">${escapeHtml(aed.name)}</span>
                         </div>
-                        <div class="text-[10px] mt-0.5 px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-medium inline-block">
-                            <i class="fa-regular fa-clock mr-1"></i>${presenceText}
+                        <div class="text-[8px] sm:text-[10px] px-1 py-0.2 rounded-full bg-indigo-50 text-indigo-700 font-medium inline-block whitespace-nowrap">
+                            <i class="fa-regular fa-clock mr-0.5"></i>${presenceText}
                         </div>
                     </th>
                 `;
@@ -926,17 +1058,18 @@
                 if (slot.type === 'recre') rowBgClass = 'bg-amber-50/70 border-y border-amber-200/60';
                 if (slot.type === 'pause') rowBgClass = 'bg-slate-100/60';
 
-                tbodyHTML += `<tr class="${rowBgClass} slot-row transition-colors">`;
+                const rowId = `slot-row-${slotIdx}`;
+                tbodyHTML += `<tr id="${rowId}" class="${rowBgClass} slot-row transition-colors">`;
 
                 tbodyHTML += `
-                    <td class="p-2 font-semibold border-r border-b border-slate-200 sticky left-0 bg-white z-10 shadow-sm align-middle">
-                        <div class="flex items-center gap-2">
-                            <span class="px-2 py-0.5 rounded text-xs font-bold ${
+                    <td class="p-0.5 sm:p-2 font-semibold border-r border-b border-slate-200 sticky left-0 bg-white z-10 shadow-sm align-middle cursor-pointer" onclick="toggleRowHighlight('${rowId}')">
+                        <div class="flex flex-row items-center gap-1 sm:gap-2 justify-between sm:justify-start">
+                            <span class="px-1 sm:px-2 py-0.2 rounded text-[9px] sm:text-xs font-extrabold ${
                                 slot.type === 'recre' ? 'bg-amber-200 text-amber-900 border border-amber-300' : (slot.type === 'pause' ? 'bg-slate-200 text-slate-700' : 'bg-indigo-100 text-indigo-800')
                             }">
                                 ${slot.label}
                             </span>
-                            <span class="text-xs text-slate-500 font-normal">
+                            <span class="text-[8px] sm:text-xs text-slate-500 font-medium whitespace-nowrap hidden sm:inline">
                                 ${slot.start} - ${slot.end}
                             </span>
                         </div>
@@ -958,25 +1091,25 @@
                         const styleInfo = MISSION_TYPES[mission.type] || MISSION_TYPES['Permanence'];
 
                         tbodyHTML += `
-                            <td rowspan="${rowSpan}" class="p-1 border-r border-b border-slate-200 align-top p-1">
+                            <td rowspan="${rowSpan}" class="p-0 border-r border-b border-slate-200 align-top h-full">
                                 <div ${!isPrint ? `onclick="event.stopPropagation(); openMissionModal('${aed.id}', '${mission.id}')"` : ''} 
-                                    class="mission-block w-full h-full p-2 rounded-xl ${styleInfo.bg} ${styleInfo.text} ${styleInfo.border} shadow-md border cursor-pointer transition-all hover:brightness-105 flex flex-col justify-between overflow-hidden box-border">
+                                    class="mission-block w-full p-1 sm:p-1.5 rounded sm:rounded-xl ${styleInfo.bg} ${styleInfo.text} ${styleInfo.border} shadow-sm border cursor-pointer transition-all hover:brightness-105 flex flex-col justify-between overflow-hidden box-border">
                                     
-                                    <div class="flex flex-col gap-0.5">
+                                    <div class="flex flex-col gap-0">
                                         <div class="flex items-center justify-between">
-                                            <span class="font-extrabold text-xs tracking-wide flex items-center gap-1.5 uppercase leading-tight">
-                                                <i class="fa-solid ${styleInfo.icon} text-xs opacity-90"></i>
+                                            <span class="font-extrabold text-[9px] sm:text-xs tracking-tight flex items-center gap-1 uppercase leading-tight truncate">
+                                                <i class="fa-solid ${styleInfo.icon} text-[8px] sm:text-xs opacity-90 hidden sm:inline"></i>
                                                 ${escapeHtml(styleInfo.name)}
                                             </span>
                                         </div>
                                         
-                                        <div class="text-[11px] font-semibold opacity-95 flex items-center gap-1 mt-0.5">
-                                            <i class="fa-regular fa-clock text-[10px]"></i> ${mission.startTime} - ${mission.endTime}
-                                            ${rowSpan > 1 ? `<span class="ml-1 bg-black/20 px-1 py-0.2 rounded text-[9px] font-bold">${rowSpan}h</span>` : ''}
+                                        <div class="text-[8px] sm:text-[11px] font-semibold opacity-95 flex items-center gap-0.5 whitespace-nowrap">
+                                            <i class="fa-regular fa-clock text-[7px] sm:text-[10px] hidden sm:inline"></i> ${mission.startTime} - ${mission.endTime}
+                                            ${rowSpan > 1 ? `<span class="ml-0.5 bg-black/20 px-1 py-0.2 rounded text-[7px] sm:text-[9px] font-bold">${rowSpan}h</span>` : ''}
                                         </div>
                                     </div>
 
-                                    ${mission.notes ? `<div class="text-[10px] italic opacity-90 border-t border-white/20 pt-0.5 truncate">${escapeHtml(mission.notes)}</div>` : ''}
+                                    ${mission.notes ? `<div class="text-[7px] sm:text-[10px] italic opacity-90 border-t border-white/20 pt-0.5 truncate hidden sm:block">${escapeHtml(mission.notes)}</div>` : ''}
                                 </div>
                             </td>
                         `;
@@ -984,9 +1117,9 @@
                         tbodyHTML += `
                             <td class="p-0 border-r border-b border-slate-200 align-top">
                                 ${!isPrint ? `
-                                <div onclick="openMissionModal('${aed.id}', null,${slotIdx})" class="w-full h-full cursor-pointer hover:bg-indigo-50/50 group flex items-center justify-center p-1">
-                                    <div class="h-full w-full rounded-lg border border-dashed border-slate-200 flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-slate-400 text-xs gap-1 font-medium bg-white/60">
-                                        <i class="fa-solid fa-plus text-[10px]"></i> Affecter
+                                <div onclick="openMissionModal('${aed.id}', null, ${slotIdx})" class="w-full h-full cursor-pointer hover:bg-indigo-50/50 group flex items-center justify-center p-0.5">
+                                    <div class="h-full w-full rounded border border-dashed border-slate-200 flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-slate-400 text-[9px] font-medium bg-white/60">
+                                        <i class="fa-solid fa-plus text-[8px]"></i>
                                     </div>
                                 </div>` : ''}
                             </td>
@@ -998,7 +1131,7 @@
             });
 
             return `
-                <table class="w-full border-collapse text-left text-sm">
+                <table class="w-full border-collapse text-left text-xs sm:text-sm">
                     <thead>
                         <tr class="bg-slate-100/80 text-slate-700 border-b border-slate-200">${headerHTML}</tr>
                     </thead>
@@ -1007,12 +1140,101 @@
             `;
         }
 
+        // Render Agenda cards (Alternative)
+        function renderMobileCardsView(targetDay) {
+            const container = document.getElementById('mobile-cards-wrapper');
+            if (!container) return;
+
+            const activeAedsForDay = (appState.aeds || []).filter(aed => 
+                aed.presence && aed.presence[targetDay] && aed.presence[targetDay].active
+            );
+
+            if (activeAedsForDay.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            const dayMissions = (appState.missions || []).filter(m => m.day === targetDay);
+
+            container.innerHTML = activeAedsForDay.map(aed => {
+                const aedMissions = dayMissions.filter(m => m.aedId === aed.id);
+                const dayP = aed.presence[targetDay];
+                let presenceText = `${dayP.start1 || ''}-${dayP.end1 || ''}`;
+                if (dayP.split && dayP.start2) presenceText += ` / ${dayP.start2}-${dayP.end2}`;
+
+                let missionsHTML = '';
+                if (aedMissions.length === 0) {
+                    missionsHTML = `
+                        <div class="p-2 bg-slate-50 border border-dashed border-slate-200 rounded-xl text-center text-xs text-slate-400 flex items-center justify-between">
+                            <span>Aucun poste affecté</span>
+                            <button onclick="openMissionModal('${aed.id}', null, 0)" class="text-indigo-600 font-bold hover:underline text-xs">+ Ajouter</button>
+                        </div>
+                    `;
+                } else {
+                    missionsHTML = aedMissions.sort((a,b) => a.startSlotIndex - b.startSlotIndex).map(m => {
+                        const styleInfo = MISSION_TYPES[m.type] || MISSION_TYPES['Permanence'];
+                        const slotLabel = SLOTS[m.startSlotIndex] ? SLOTS[m.startSlotIndex].label : 'Slot';
+                        return `
+                            <div onclick="openMissionModal('${aed.id}', '${m.id}')" class="p-2 rounded-xl ${styleInfo.bg} ${styleInfo.text} shadow-sm flex items-center justify-between cursor-pointer active:scale-[0.98] transition">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-6 h-6 rounded-lg bg-black/20 flex items-center justify-center font-bold text-[11px]">
+                                        ${slotLabel}
+                                    </span>
+                                    <div>
+                                        <div class="font-extrabold text-[11px] uppercase flex items-center gap-1">
+                                            <i class="fa-solid ${styleInfo.icon} text-[9px]"></i> ${escapeHtml(styleInfo.name)}
+                                        </div>
+                                        <div class="text-[10px] opacity-90 font-medium">
+                                            ${m.startTime} - ${m.endTime} ${m.notes ? `• ${escapeHtml(m.notes)}` : ''}
+                                        </div>
+                                    </div>
+                                </div>
+                                <i class="fa-solid fa-pen text-[10px] opacity-70"></i>
+                            </div>
+                        `;
+                    }).join('');
+                }
+
+                return `
+                    <div class="bg-white rounded-xl border border-slate-200 p-3 flex flex-col gap-2.5 shadow-sm">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-1.5">
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-3 rounded-full inline-block" style="background-color: ${aed.color}"></span>
+                                <span class="font-extrabold text-slate-800 text-xs sm:text-sm">${escapeHtml(aed.name)}</span>
+                            </div>
+                            <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700">
+                                <i class="fa-regular fa-clock mr-0.5"></i>${presenceText}
+                            </span>
+                        </div>
+
+                        <div class="flex flex-col gap-1.5">
+                            ${missionsHTML}
+                        </div>
+
+                        <button onclick="openMissionModal('${aed.id}', null, 0)" class="w-full py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-lg transition flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-plus text-[9px]"></i> Affecter un créneau
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleMobileDisplayMode() {
+            isMobileGridView = !isMobileGridView;
+            renderMatrix();
+        }
+
         function renderMatrix() {
             renderCPEValues();
             const headerRow = document.getElementById('matrix-header-row');
             const tbody = document.getElementById('matrix-body');
             const warningBox = document.getElementById('no-aed-warning');
             const alertsBar = document.getElementById('cpe-alerts-bar');
+            
+            const desktopWrapper = document.getElementById('desktop-matrix-wrapper');
+            const mobileWrapper = document.getElementById('mobile-cards-wrapper');
+            const toggleBtn = document.getElementById('toggle-display-btn');
+            const mobileTitle = document.getElementById('mobile-view-title');
 
             const activeAeds = (appState.aeds || []).filter(aed => 
                 aed.presence && aed.presence[appState.currentDay] && aed.presence[appState.currentDay].active
@@ -1021,11 +1243,33 @@
             if (activeAeds.length === 0) {
                 headerRow.innerHTML = '';
                 tbody.innerHTML = '';
+                if(mobileWrapper) mobileWrapper.innerHTML = '';
                 warningBox.classList.remove('hidden');
                 alertsBar.classList.add('hidden');
                 return;
             }
             warningBox.classList.add('hidden');
+
+            // Affichage de la Grille par défaut
+            const isSmallScreen = window.innerWidth < 640;
+            if (isSmallScreen && !isMobileGridView) {
+                if (desktopWrapper) desktopWrapper.classList.add('hidden');
+                if (mobileWrapper) {
+                    mobileWrapper.classList.remove('hidden');
+                    mobileWrapper.classList.add('flex');
+                }
+                if (toggleBtn) toggleBtn.innerHTML = `<i class="fa-solid fa-table-cells"></i> Mode Grille`;
+                if (mobileTitle) mobileTitle.textContent = "Aperçu Liste";
+                renderMobileCardsView(appState.currentDay);
+            } else {
+                if (desktopWrapper) desktopWrapper.classList.remove('hidden');
+                if (mobileWrapper) {
+                    mobileWrapper.classList.add('hidden');
+                    mobileWrapper.classList.remove('flex');
+                }
+                if (toggleBtn) toggleBtn.innerHTML = `<i class="fa-solid fa-list-check"></i> Mode Liste`;
+                if (mobileTitle) mobileTitle.textContent = "Vue Grille (Complete)";
+            }
 
             let morningCount = 0;
             let eveningCount = 0;
@@ -1039,15 +1283,14 @@
 
             let alertsHTML = '';
             if (dayConstraints.minMorning > 0 && morningCount < dayConstraints.minMorning) {
-                alertsHTML += `<div class="bg-rose-50 border-l-4 border-rose-500 p-3 rounded-r-xl text-xs text-rose-800 flex items-center justify-between">
-                    <span><i class="fa-solid fa-triangle-exclamation mr-1.5 text-rose-600"></i><strong>Alerte CPE Matin (08h) [${appState.currentDay}] :</strong> Seule(s) ${morningCount} personne(s) présente(s) au lieu de ${dayConstraints.minMorning} requises.</span>
+                alertsHTML += `<div class="bg-rose-50 border-l-4 border-rose-500 p-2 sm:p-3 rounded-r-xl text-xs text-rose-800 flex items-center justify-between shadow-sm">
+                    <span><i class="fa-solid fa-triangle-exclamation mr-1.5 text-rose-600"></i><strong>Alerte Matin (08h) [${appState.currentDay}] :</strong> ${morningCount}/${dayConstraints.minMorning} présent(s).</span>
                 </div>`;
             }
             
-            // Pas de contrainte le mercredi soir
             if (appState.currentDay !== 'Mercredi' && dayConstraints.minEvening > 0 && eveningCount < dayConstraints.minEvening) {
-                alertsHTML += `<div class="bg-rose-50 border-l-4 border-rose-500 p-3 rounded-r-xl text-xs text-rose-800 flex items-center justify-between">
-                    <span><i class="fa-solid fa-triangle-exclamation mr-1.5 text-rose-600"></i><strong>Alerte CPE Soir (17h) [${appState.currentDay}] :</strong> Seule(s) ${eveningCount} personne(s) présente(s) au lieu de ${dayConstraints.minEvening} requises.</span>
+                alertsHTML += `<div class="bg-rose-50 border-l-4 border-rose-500 p-2 sm:p-3 rounded-r-xl text-xs text-rose-800 flex items-center justify-between shadow-sm">
+                    <span><i class="fa-solid fa-triangle-exclamation mr-1.5 text-rose-600"></i><strong>Alerte Soir (17h) [${appState.currentDay}] :</strong> ${eveningCount}/${dayConstraints.minEvening} présent(s).</span>
                 </div>`;
             }
 
@@ -1118,7 +1361,7 @@
                 saveState();
                 renderAEDCards();
                 renderMatrix();
-                showToast(`Statut étudiant de ${aed.name} mis à jour.`);
+                showToast(`Statut étudiant mis à jour (${aed.name}).`);
             }
         }
 
@@ -1144,56 +1387,56 @@
                 if (Math.abs(diffPresence) < 0.1) {
                     presenceStatus = `<span class="text-emerald-600 font-bold flex items-center gap-1"><i class="fa-solid fa-circle-check"></i> Conforme (${presenceHours}h)</span>`;
                 } else if (diffPresence < 0) {
-                    presenceStatus = `<span class="text-rose-600 font-bold flex items-center gap-1"><i class="fa-solid fa-circle-exclamation"></i> Incomplet (${presenceHours}h / ${targetHours}h • ${diffPresence.toFixed(1)}h)</span>`;
+                    presenceStatus = `<span class="text-rose-600 font-bold flex items-center gap-1"><i class="fa-solid fa-circle-exclamation"></i> Incomplet (${presenceHours}h / ${targetHours}h)</span>`;
                 } else {
-                    presenceStatus = `<span class="text-amber-600 font-bold flex items-center gap-1"><i class="fa-solid fa-triangle-exclamation"></i> Surplus (${presenceHours}h / ${targetHours}h • +${diffPresence.toFixed(1)}h)</span>`;
+                    presenceStatus = `<span class="text-amber-600 font-bold flex items-center gap-1"><i class="fa-solid fa-triangle-exclamation"></i> Surplus (+${diffPresence.toFixed(1)}h)</span>`;
                 }
 
                 return `
-                    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition p-5 flex flex-col justify-between gap-4 relative overflow-hidden">
+                    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition p-4 sm:p-5 flex flex-col justify-between gap-3 relative overflow-hidden">
                         <div class="absolute top-0 left-0 right-0 h-1.5" style="background-color: ${aed.color}"></div>
                         
                         <div class="flex flex-col gap-3">
                             <div class="flex justify-between items-start gap-2 pt-1">
                                 <div>
-                                    <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                                    <h3 class="font-extrabold text-slate-800 text-sm sm:text-base flex items-center gap-2">
                                         ${escapeHtml(aed.name)}
                                     </h3>
-                                    <span class="text-xs text-slate-500 font-medium">Contrat ${aed.contract}% (${targetHours}h demandées)</span>
+                                    <span class="text-xs text-slate-500 font-medium">Contrat ${aed.contract}% (${targetHours}h prévues)</span>
                                 </div>
                                 <div class="flex items-center gap-1">
-                                    <button onclick="openAEDModal('${aed.id}')" class="p-1.5 text-slate-400 hover:text-indigo-600 rounded-lg hover:bg-slate-100 transition" title="Éditer">
+                                    <button onclick="openAEDModal('${aed.id}')" class="p-2 text-slate-400 hover:text-indigo-600 rounded-xl hover:bg-slate-100 transition" title="Éditer">
                                         <i class="fa-solid fa-pen-to-square"></i>
                                     </button>
-                                    <button onclick="deleteAED('${aed.id}')" class="p-1.5 text-slate-400 hover:text-red-600 rounded-lg hover:bg-slate-100 transition" title="Supprimer">
+                                    <button onclick="deleteAED('${aed.id}')" class="p-2 text-slate-400 hover:text-red-600 rounded-xl hover:bg-slate-100 transition" title="Supprimer">
                                         <i class="fa-solid fa-trash-can"></i>
                                     </button>
                                 </div>
                             </div>
 
-                            <div class="bg-indigo-50/60 border border-indigo-100 p-3 rounded-xl flex flex-col gap-1.5">
+                            <div class="bg-indigo-50/60 border border-indigo-100 p-3 rounded-xl flex flex-col gap-1">
                                 <div class="flex justify-between items-center text-xs">
-                                    <span class="text-slate-600 font-medium">Temps Présence Réel :</span>
+                                    <span class="text-slate-600 font-semibold">Présence réelle :</span>
                                     ${presenceStatus}
                                 </div>
                             </div>
 
-                            <div class="bg-slate-50 border border-slate-200 p-3 rounded-xl flex items-center justify-between">
+                            <div class="bg-slate-50 border border-slate-200/80 p-3 rounded-xl flex items-center justify-between">
                                 <div class="flex items-center gap-2">
-                                    <i class="fa-solid fa-graduation-cap text-amber-600"></i>
+                                    <i class="fa-solid fa-graduation-cap text-amber-600 text-sm"></i>
                                     <div>
-                                        <span class="text-xs font-bold text-slate-700 block">Case Étudiant</span>
-                                        <span class="text-[10px] text-slate-500">Quota : ${targetHours}h / sem.</span>
+                                        <span class="text-xs font-bold text-slate-700 block">Étudiant</span>
+                                        <span class="text-[10px] text-slate-500 font-medium">Quota: ${targetHours}h/sem.</span>
                                     </div>
                                 </div>
                                 <button onclick="toggleStudentQuick('${aed.id}')" class="px-2.5 py-1 rounded-lg text-xs font-bold transition ${aed.isStudent ? 'bg-amber-500 text-white shadow' : 'bg-slate-200 text-slate-600 hover:bg-slate-300'}">
-                                    ${aed.isStudent ? 'OUI (Actif)' : 'NON'}
+                                    ${aed.isStudent ? 'OUI' : 'NON'}
                                 </button>
                             </div>
                         </div>
 
-                        <div class="border-t border-slate-100 pt-3 flex justify-between items-center text-xs text-slate-500">
-                            <span>Missions enregistrées :</span>
+                        <div class="border-t border-slate-100 pt-2.5 flex justify-between items-center text-xs text-slate-500 font-medium">
+                            <span>Postes programmés :</span>
                             <span class="font-bold text-slate-800">${(appState.missions || []).filter(m => m.aedId === aed.id).length}</span>
                         </div>
                     </div>
@@ -1211,7 +1454,7 @@
                 };
 
                 return `
-                    <div class="bg-white p-3 rounded-lg border border-slate-200 flex flex-col gap-2.5">
+                    <div class="bg-white p-3 rounded-xl border border-slate-200/80 flex flex-col gap-2 shadow-sm">
                         <div class="flex items-center justify-between">
                             <label class="inline-flex items-center gap-2 cursor-pointer">
                                 <input type="checkbox" id="pres-active-${day}" ${dayData.active ? 'checked' : ''} class="w-4 h-4 text-indigo-600 rounded">
@@ -1220,23 +1463,23 @@
 
                             <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs text-slate-600">
                                 <input type="checkbox" id="pres-split-${day}" ${dayData.split ? 'checked' : ''} onchange="toggleDaySplit('${day}')" class="w-3.5 h-3.5 text-indigo-600 rounded">
-                                <span class="text-[11px] font-medium">Deuxième créneau (Journée coupée)</span>
+                                <span class="text-[10px] font-medium">2nd créneau</span>
                             </label>
                         </div>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-slate-100">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-slate-100">
                             <div class="flex items-center gap-1 text-[11px]">
-                                <span class="text-slate-500 font-medium w-16">Créneau 1 :</span>
-                                <input type="time" id="pres-start1-${day}" value="${dayData.start1 || ''}" class="p-1 border rounded text-xs">
+                                <span class="text-slate-500 font-medium w-14">C1:</span>
+                                <input type="time" id="pres-start1-${day}" value="${dayData.start1 || ''}" class="p-1 border rounded-lg text-xs font-medium w-full">
                                 <span>à</span>
-                                <input type="time" id="pres-end1-${day}" value="${dayData.end1 || ''}" class="p-1 border rounded text-xs">
+                                <input type="time" id="pres-end1-${day}" value="${dayData.end1 || ''}" class="p-1 border rounded-lg text-xs font-medium w-full">
                             </div>
 
                             <div id="slot2-container-${day}" class="${dayData.split ? 'flex' : 'hidden'} items-center gap-1 text-[11px]">
-                                <span class="text-slate-500 font-medium w-16">Créneau 2 :</span>
-                                <input type="time" id="pres-start2-${day}" value="${dayData.start2 || ''}" class="p-1 border rounded text-xs">
+                                <span class="text-slate-500 font-medium w-14">C2:</span>
+                                <input type="time" id="pres-start2-${day}" value="${dayData.start2 || ''}" class="p-1 border rounded-lg text-xs font-medium w-full">
                                 <span>à</span>
-                                <input type="time" id="pres-end2-${day}" value="${dayData.end2 || ''}" class="p-1 border rounded text-xs">
+                                <input type="time" id="pres-end2-${day}" value="${dayData.end2 || ''}" class="p-1 border rounded-lg text-xs font-medium w-full">
                             </div>
                         </div>
                     </div>
