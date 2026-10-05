@@ -1,3 +1,4 @@
+<open_file name="PLANNING.html">
 <!DOCTYPE html>
 <html lang="fr" class="h-full bg-slate-50">
 <head>
@@ -359,6 +360,71 @@
                 </div>
             </div>
 
+            <!-- Section Pauses AED (AU DESSUS DE SEUIL CPE) -->
+            <div id="aed-breaks-bar" class="no-print bg-white p-3 rounded-xl sm:rounded-2xl border border-slate-200/80 shadow-sm flex flex-col gap-2.5">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                    <div class="flex items-center gap-2">
+                        <span class="p-1.5 bg-amber-100 text-amber-700 rounded-lg text-xs flex items-center justify-center">
+                            <i class="fa-solid fa-mug-hot"></i>
+                        </span>
+                        <div>
+                            <h3 class="text-xs sm:text-sm font-bold text-slate-800">Pauses des AEDs</h3>
+                            <p class="text-[10px] sm:text-xs text-slate-500">Répartition des pauses du midi (11h30, 12h00, 12h30)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <!-- Pause 11h30 -->
+                    <div class="bg-amber-50/50 border border-amber-200/70 p-2.5 rounded-xl flex flex-col gap-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-extrabold text-amber-900 flex items-center gap-1">
+                                <i class="fa-regular fa-clock text-amber-600"></i> 11h30
+                            </span>
+                            <div class="relative inline-block text-left">
+                                <button onclick="toggleBreakDropdown('11h30')" class="bg-amber-600 hover:bg-amber-700 text-white w-6 h-6 rounded-lg text-xs font-bold flex items-center justify-center shadow transition" title="Ajouter un AED à 11h30">
+                                    +
+                                </button>
+                                <div id="break-dropdown-11h30" class="hidden absolute right-0 mt-1 w-48 bg-white border border-slate-200 rounded-xl shadow-xl z-30 py-1 text-xs"></div>
+                            </div>
+                        </div>
+                        <div id="break-list-11h30" class="flex flex-wrap gap-1.5 min-h-[28px]"></div>
+                    </div>
+
+                    <!-- Pause 12h00 -->
+                    <div class="bg-amber-50/50 border border-amber-200/70 p-2.5 rounded-xl flex flex-col gap-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-extrabold text-amber-900 flex items-center gap-1">
+                                <i class="fa-regular fa-clock text-amber-600"></i> 12h00
+                            </span>
+                            <div class="relative inline-block text-left">
+                                <button onclick="toggleBreakDropdown('12h00')" class="bg-amber-600 hover:bg-amber-700 text-white w-6 h-6 rounded-lg text-xs font-bold flex items-center justify-center shadow transition" title="Ajouter un AED à 12h00">
+                                    +
+                                </button>
+                                <div id="break-dropdown-12h00" class="hidden absolute right-0 mt-1 w-48 bg-white border border-slate-200 rounded-xl shadow-xl z-30 py-1 text-xs"></div>
+                            </div>
+                        </div>
+                        <div id="break-list-12h00" class="flex flex-wrap gap-1.5 min-h-[28px]"></div>
+                    </div>
+
+                    <!-- Pause 12h30 -->
+                    <div class="bg-amber-50/50 border border-amber-200/70 p-2.5 rounded-xl flex flex-col gap-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-extrabold text-amber-900 flex items-center gap-1">
+                                <i class="fa-regular fa-clock text-amber-600"></i> 12h30
+                            </span>
+                            <div class="relative inline-block text-left">
+                                <button onclick="toggleBreakDropdown('12h30')" class="bg-amber-600 hover:bg-amber-700 text-white w-6 h-6 rounded-lg text-xs font-bold flex items-center justify-center shadow transition" title="Ajouter un AED à 12h30">
+                                    +
+                                </button>
+                                <div id="break-dropdown-12h30" class="hidden absolute right-0 mt-1 w-48 bg-white border border-slate-200 rounded-xl shadow-xl z-30 py-1 text-xs"></div>
+                            </div>
+                        </div>
+                        <div id="break-list-12h30" class="flex flex-wrap gap-1.5 min-h-[28px]"></div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Badges de présence pour Portail et Permanence -->
             <div id="realtime-post-badges" class="no-print flex flex-wrap items-center gap-2 text-xs">
                 <!-- Badge Portail -->
@@ -706,7 +772,8 @@
             currentDay: getCurrentDayName(),
             cpeConstraints: {},
             aeds: [],
-            missions: []
+            missions: [],
+            aedBreaks: {} // Structure: { [day]: { '11h30': [aedId, ...], '12h00': [...], '12h30': [...] } }
         };
 
         function toggleRowHighlight(rowId) {
@@ -739,6 +806,25 @@
             }
         }
 
+        function initAedBreaks() {
+            if (!appState.aedBreaks) {
+                appState.aedBreaks = {};
+            }
+            DAYS.forEach(day => {
+                if (!appState.aedBreaks[day]) {
+                    appState.aedBreaks[day] = {
+                        '11h30': [],
+                        '12h00': [],
+                        '12h30': []
+                    };
+                } else {
+                    if (!appState.aedBreaks[day]['11h30']) appState.aedBreaks[day]['11h30'] = [];
+                    if (!appState.aedBreaks[day]['12h00']) appState.aedBreaks[day]['12h00'] = [];
+                    if (!appState.aedBreaks[day]['12h30']) appState.aedBreaks[day]['12h30'] = [];
+                }
+            });
+        }
+
         function escapeHtml(str) {
             if (!str) return '';
             return String(str)
@@ -768,6 +854,7 @@
                     appState = data;
                     appState.currentDay = activeDay;
                     initCpeConstraints();
+                    initAedBreaks();
                     if (!appState.aeds) appState.aeds = [];
                     if (!appState.missions) appState.missions = [];
                     localStorage.setItem('aed_timetable_app_v5', JSON.stringify(appState));
@@ -791,6 +878,7 @@
                     appState = JSON.parse(saved);
                     appState.currentDay = activeDay;
                     initCpeConstraints();
+                    initAedBreaks();
                 } else {
                     seedDefaultData();
                 }
@@ -827,6 +915,15 @@
                 'Vendredi': { minMorning: 4, minEvening: 4 }
             };
 
+            appState.aedBreaks = {};
+            DAYS.forEach(day => {
+                appState.aedBreaks[day] = {
+                    '11h30': [],
+                    '12h00': [],
+                    '12h30': []
+                };
+            });
+
             appState.aeds = [
                 { id: 'aed-1', name: 'Sophie MARTIN', contract: 100, isStudent: false, customHours: 40, color: '#4f46e5', presence: JSON.parse(JSON.stringify(defaultPresence)) },
                 { id: 'aed-2', name: 'Lucas BERNARD', contract: 100, isStudent: true, customHours: 35, color: '#059669', presence: JSON.parse(JSON.stringify(defaultPresence)) },
@@ -847,6 +944,7 @@
         function renderAll() {
             renderCPEValues();
             renderDayTabs();
+            renderBreaksBar();
             renderMatrix();
             renderAEDCards();
             renderEquityDashboard();
@@ -858,7 +956,105 @@
             populateMissionTypeDropdown();
             renderPresenceFormFields();
             initFirebaseSync();
+
+            // Fermer les menus déroulants lors d'un clic à l'extérieur
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.relative')) {
+                    ['11h30', '12h00', '12h30'].forEach(timeSlot => {
+                        const dd = document.getElementById(`break-dropdown-${timeSlot}`);
+                        if (dd) dd.classList.add('hidden');
+                    });
+                }
+            });
         };
+
+        /* Gestion des Pauses des AEDs */
+        function renderBreaksBar() {
+            initAedBreaks();
+            const dayBreaks = appState.aedBreaks[appState.currentDay] || { '11h30': [], '12h00': [], '12h30': [] };
+            
+            // Récupérer les AEDs présents le jour sélectionné
+            const activeAeds = (appState.aeds || []).filter(aed => 
+                aed.presence && aed.presence[appState.currentDay] && aed.presence[appState.currentDay].active
+            );
+
+            ['11h30', '12h00', '12h30'].forEach(timeSlot => {
+                const listEl = document.getElementById(`break-list-${timeSlot}`);
+                const dropdownEl = document.getElementById(`break-dropdown-${timeSlot}`);
+                if (!listEl || !dropdownEl) return;
+
+                const assignedAedIds = dayBreaks[timeSlot] || [];
+
+                // Affichage des badges AEDs en pause
+                if (assignedAedIds.length === 0) {
+                    listEl.innerHTML = `<span class="text-[10px] text-slate-400 italic font-medium py-1">Aucune pause</span>`;
+                } else {
+                    listEl.innerHTML = assignedAedIds.map(aedId => {
+                        const aed = (appState.aeds || []).find(a => a.id === aedId);
+                        if (!aed) return '';
+                        return `
+                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-xs font-bold shadow-sm text-white" style="background-color: ${aed.color}">
+                                <span>${escapeHtml(aed.name)}</span>
+                                <button onclick="removeAedFromBreak('${timeSlot}', '${aed.id}')" class="hover:text-red-200 text-[10px] ml-0.5 focus:outline-none" title="Supprimer la pause">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </span>
+                        `;
+                    }).join('');
+                }
+
+                // Génération des éléments du menu déroulant (AEDs non encore affectés à cet horaire)
+                const availableAeds = activeAeds.filter(aed => !assignedAedIds.includes(aed.id));
+                if (availableAeds.length === 0) {
+                    dropdownEl.innerHTML = `<div class="px-3 py-1.5 text-[11px] text-slate-400 font-medium">Aucun AED disponible</div>`;
+                } else {
+                    dropdownEl.innerHTML = availableAeds.map(aed => `
+                        <button onclick="addAedToBreak('${timeSlot}', '${aed.id}')" class="w-full text-left px-3 py-1.5 hover:bg-slate-100 font-medium flex items-center gap-2 text-slate-700">
+                            <span class="w-2.5 h-2.5 rounded-full inline-block" style="background-color: ${aed.color}"></span>
+                            <span class="truncate">${escapeHtml(aed.name)}</span>
+                        </button>
+                    `).join('');
+                }
+            });
+        }
+
+        function toggleBreakDropdown(timeSlot) {
+            ['11h30', '12h00', '12h30'].forEach(slot => {
+                const dd = document.getElementById(`break-dropdown-${slot}`);
+                if (dd) {
+                    if (slot === timeSlot) {
+                        dd.classList.toggle('hidden');
+                    } else {
+                        dd.classList.add('hidden');
+                    }
+                }
+            });
+        }
+
+        function addAedToBreak(timeSlot, aedId) {
+            initAedBreaks();
+            const dayBreaks = appState.aedBreaks[appState.currentDay];
+            if (!dayBreaks[timeSlot]) dayBreaks[timeSlot] = [];
+
+            if (!dayBreaks[timeSlot].includes(aedId)) {
+                dayBreaks[timeSlot].push(aedId);
+                saveState();
+                renderBreaksBar();
+            }
+
+            const dropdownEl = document.getElementById(`break-dropdown-${timeSlot}`);
+            if (dropdownEl) dropdownEl.classList.add('hidden');
+        }
+
+        function removeAedFromBreak(timeSlot, aedId) {
+            initAedBreaks();
+            const dayBreaks = appState.aedBreaks[appState.currentDay];
+            if (dayBreaks[timeSlot]) {
+                dayBreaks[timeSlot] = dayBreaks[timeSlot].filter(id => id !== aedId);
+                saveState();
+                renderBreaksBar();
+            }
+        }
 
         /* Mise à jour des Badges Portail & Permanence */
         function updateBadges() {
@@ -1015,6 +1211,7 @@
         function selectDay(day) {
             appState.currentDay = day;
             renderDayTabs();
+            renderBreaksBar();
             renderMatrix();
         }
 
@@ -1560,7 +1757,22 @@
             if (confirm("Voulez-vous vraiment supprimer cet AED et toutes ses affectations ?")) {
                 appState.aeds = (appState.aeds || []).filter(a => a.id !== id);
                 appState.missions = (appState.missions || []).filter(m => m.aedId !== id);
+                
+                // Nettoyer les pauses associées à cet AED
+                if (appState.aedBreaks) {
+                    DAYS.forEach(day => {
+                        if (appState.aedBreaks[day]) {
+                            ['11h30', '12h00', '12h30'].forEach(slot => {
+                                if (appState.aedBreaks[day][slot]) {
+                                    appState.aedBreaks[day][slot] = appState.aedBreaks[day][slot].filter(aId => aId !== id);
+                                }
+                            });
+                        }
+                    });
+                }
+
                 saveState();
+                renderBreaksBar();
                 renderMatrix();
                 renderAEDCards();
                 renderEquityDashboard();
@@ -1748,6 +1960,7 @@
                     if (data && data.aeds && data.missions) {
                         appState = data;
                         initCpeConstraints();
+                        initAedBreaks();
                         saveState();
                         showToast("Données importées avec succès.");
                     } else {
