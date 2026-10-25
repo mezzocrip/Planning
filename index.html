@@ -256,6 +256,10 @@
                             <i class="fa-solid fa-ellipsis-vertical px-1"></i>
                         </button>
                         <div class="absolute right-0 mt-1 w-56 bg-white rounded-2xl shadow-2xl py-2 z-50 hidden group-hover:block border border-slate-100 text-slate-700 text-sm">
+                            <button onclick="openIcsExportModal()" class="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2 font-semibold text-indigo-600">
+                                <i class="fa-solid fa-calendar-arrow-down"></i> Exporter Calendrier (.ics)
+                            </button>
+                            <hr class="my-1 border-slate-100">
                             <button onclick="exportData()" class="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2 font-medium">
                                 <i class="fa-solid fa-file-export text-indigo-600"></i> Exporter (JSON)
                             </button>
@@ -320,6 +324,11 @@
                 </div>
 
                 <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                    <!-- Bouton rapide d'exportation ICS -->
+                    <button onclick="openIcsExportModal()" class="flex items-center justify-center gap-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-3 py-1.5 rounded-xl text-xs font-bold transition">
+                        <i class="fa-solid fa-calendar-arrow-down text-indigo-600"></i> Exporter ICS
+                    </button>
+
                     <!-- Option d'impression dédiée -->
                     <div class="hidden sm:flex items-center gap-2 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-xl">
                         <span class="text-xs font-bold text-indigo-900"><i class="fa-solid fa-print text-indigo-600 mr-1"></i> Mode :</span>
@@ -681,6 +690,48 @@
         </div>
     </div>
 
+    <!-- Modal: Export Calendar (.ics) -->
+    <div id="ics-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 no-print">
+        <div class="bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl max-w-md w-full overflow-hidden transform transition-all">
+            <div class="bg-indigo-700 px-5 py-4 text-white flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-calendar-arrow-down text-lg"></i>
+                    <h3 class="font-bold text-base sm:text-lg">Exporter l'Emploi du Temps (.ics)</h3>
+                </div>
+                <button onclick="closeIcsExportModal()" class="text-indigo-200 hover:text-white p-1 rounded-lg">
+                    <i class="fa-solid fa-xmark text-base"></i>
+                </button>
+            </div>
+
+            <div class="p-5 flex flex-col gap-4 text-xs sm:text-sm">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1.5">Sélectionner un membre de l'équipe</label>
+                    <select id="ics-aed-select" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800"></select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1.5">Date du premier Lundi de la période</label>
+                    <input type="date" id="ics-start-date" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800">
+                    <p class="text-[10px] text-slate-400 mt-1">Les créneaux de la semaine seront générés à partir de cette date en mode récurrent.</p>
+                </div>
+
+                <div class="bg-indigo-50 border border-indigo-100 p-3 rounded-xl text-indigo-900 text-xs flex items-start gap-2">
+                    <i class="fa-solid fa-circle-info text-indigo-600 mt-0.5"></i>
+                    <span>Le fichier téléchargé permettra d'importer l'emploi du temps individuel directement dans Apple Calendar, Google Calendar ou Outlook.</span>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                    <button type="button" onclick="closeIcsExportModal()" class="px-4 py-2 rounded-xl font-semibold text-slate-600 hover:bg-slate-100">
+                        Annuler
+                    </button>
+                    <button type="button" onclick="generateAndDownloadICS()" class="px-4 py-2 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md flex items-center gap-2">
+                        <i class="fa-solid fa-download"></i> Télécharger .ics
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Configuration Firebase Realtime Database
         const firebaseConfig = {
@@ -931,6 +982,16 @@
             renderPresenceFormFields();
             initFirebaseSync();
 
+            // Intercepter la date du prochain lundi par défaut
+            const today = new Date();
+            const dayOfWeek = today.getDay();
+            const daysUntilMonday = (1 + 7 - dayOfWeek) % 7;
+            const nextMonday = new Date(today);
+            nextMonday.setDate(today.getDate() + (daysUntilMonday === 0 ? 0 : daysUntilMonday));
+            const dateStr = nextMonday.toISOString().split('T')[0];
+            const dateInput = document.getElementById('ics-start-date');
+            if (dateInput) dateInput.value = dateStr;
+
             // Fermer les menus déroulants lors d'un clic à l'extérieur
             document.addEventListener('click', function(e) {
                 if (!e.target.closest('.relative')) {
@@ -941,6 +1002,153 @@
                 }
             });
         };
+
+        /* Export iCal / .ics pour chaque personne */
+        function openIcsExportModal() {
+            const modal = document.getElementById('ics-modal');
+            const select = document.getElementById('ics-aed-select');
+            
+            if (!appState.aeds || appState.aeds.length === 0) {
+                alert("Aucun AED enregistré.");
+                return;
+            }
+
+            select.innerHTML = appState.aeds.map(aed => 
+                `<option value="${aed.id}">${escapeHtml(aed.name)}</option>`
+            ).join('');
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeIcsExportModal() {
+            document.getElementById('ics-modal').classList.add('hidden');
+        }
+
+        function generateAndDownloadICS() {
+            const aedId = document.getElementById('ics-aed-select').value;
+            const startDateVal = document.getElementById('ics-start-date').value;
+
+            if (!startDateVal) {
+                alert("Veuillez choisir une date de début.");
+                return;
+            }
+
+            const aed = appState.aeds.find(a => a.id === aedId);
+            if (!aed) return;
+
+            const startDate = new Date(startDateVal);
+            
+            // Mapper les jours de la semaine aux indices de décalage par rapport au lundi
+            const dayOffsets = {
+                'Lundi': 0,
+                'Mardi': 1,
+                'Mercredi': 2,
+                'Jeudi': 3,
+                'Vendredi': 4
+            };
+
+            let icsContent = [
+                'BEGIN:VCALENDAR',
+                'VERSION:2.0',
+                'PRODID:-//Vie Scolaire//Planning AED//FR',
+                'CALSCALE:GREGORIAN',
+                'METHOD:PUBLISH'
+            ];
+
+            const formatICSDate = (dateObj, timeStr) => {
+                const [hours, minutes] = timeStr.split(':').map(Number);
+                const d = new Date(dateObj);
+                d.setHours(hours, minutes, 0, 0);
+                
+                const yyyy = d.getFullYear();
+                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                const dd = String(d.getDate()).padStart(2, '0');
+                const hh = String(d.getHours()).padStart(2, '0');
+                const min = String(d.getMinutes()).padStart(2, '0');
+                const ss = '00';
+
+                return `${yyyy}${mm}${dd}T${hh}${min}${ss}`;
+            };
+
+            // 1. Ajouter les plages horaires de présence générale
+            DAYS.forEach(day => {
+                const pres = aed.presence ? aed.presence[day] : null;
+                if (pres && pres.active) {
+                    const offset = dayOffsets[day];
+                    const dayDate = new Date(startDate);
+                    dayDate.setDate(startDate.getDate() + offset);
+
+                    // Créneau 1
+                    if (pres.start1 && pres.end1) {
+                        const dtStart = formatICSDate(dayDate, pres.start1);
+                        const dtEnd = formatICSDate(dayDate, pres.end1);
+                        const uid = `presence-c1-${aed.id}-${day}-${Date.now()}@viescolaire`;
+
+                        icsContent.push('BEGIN:VEVENT');
+                        icsContent.push(`UID:${uid}`);
+                        icsContent.push(`SUMMARY:Présence Vie Scolaire - ${aed.name}`);
+                        icsContent.push(`DESCRIPTION:Service Général Vie Scolaire`);
+                        icsContent.push(`DTSTART:${dtStart}`);
+                        icsContent.push(`DTEND:${dtEnd}`);
+                        icsContent.push('RRULE:FREQ=WEEKLY');
+                        icsContent.push('END:VEVENT');
+                    }
+
+                    // Créneau 2 (si journée coupée)
+                    if (pres.split && pres.start2 && pres.end2) {
+                        const dtStart = formatICSDate(dayDate, pres.start2);
+                        const dtEnd = formatICSDate(dayDate, pres.end2);
+                        const uid = `presence-c2-${aed.id}-${day}-${Date.now()}@viescolaire`;
+
+                        icsContent.push('BEGIN:VEVENT');
+                        icsContent.push(`UID:${uid}`);
+                        icsContent.push(`SUMMARY:Présence Vie Scolaire - ${aed.name}`);
+                        icsContent.push(`DESCRIPTION:Service Général Vie Scolaire (Après-midi)`);
+                        icsContent.push(`DTSTART:${dtStart}`);
+                        icsContent.push(`DTEND:${dtEnd}`);
+                        icsContent.push('RRULE:FREQ=WEEKLY');
+                        icsContent.push('END:VEVENT');
+                    }
+                }
+            });
+
+            // 2. Ajouter les missions spécifiques attribuées
+            const aedMissions = (appState.missions || []).filter(m => m.aedId === aed.id);
+            aedMissions.forEach(m => {
+                const offset = dayOffsets[m.day];
+                if (offset !== undefined) {
+                    const dayDate = new Date(startDate);
+                    dayDate.setDate(startDate.getDate() + offset);
+
+                    const dtStart = formatICSDate(dayDate, m.startTime);
+                    const dtEnd = formatICSDate(dayDate, m.endTime);
+                    const uid = `mission-${m.id}-${Date.now()}@viescolaire`;
+
+                    icsContent.push('BEGIN:VEVENT');
+                    icsContent.push(`UID:${uid}`);
+                    icsContent.push(`SUMMARY:Poste : ${m.type}`);
+                    icsContent.push(`DESCRIPTION:Poste Vie Scolaire : ${m.type}${m.notes ? '\\nNotes: ' + m.notes : ''}`);
+                    icsContent.push(`DTSTART:${dtStart}`);
+                    icsContent.push(`DTEND:${dtEnd}`);
+                    icsContent.push('RRULE:FREQ=WEEKLY');
+                    icsContent.push('END:VEVENT');
+                }
+            });
+
+            icsContent.push('END:VCALENDAR');
+
+            const blob = new Blob([icsContent.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            const safeName = aed.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+            link.download = `planning_${safeName}.ics`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            closeIcsExportModal();
+            showToast(`Planning .ics exporté pour ${aed.name}`);
+        }
 
         /* Gestion des Pauses des AEDs */
         function renderBreaksBar() {
