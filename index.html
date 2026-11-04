@@ -1073,6 +1073,11 @@
 
                     rawJson.forEach(row => {
                         const prof = getExcelFieldValue(row, ['professeur', 'prof', 'nom']);
+                        // Excursion des lignes récapitulatives de type "Total"
+                        if (prof && String(prof).trim().toLowerCase() === 'total') {
+                            return;
+                        }
+
                         const matiere = getExcelFieldValue(row, ['matière', 'matiere', 'discipline']);
                         const classe = getExcelFieldValue(row, ['classe', 'classes', 'groupe', 'groupes']);
                         const duree = getExcelFieldValue(row, ['durée', 'duree']);
@@ -1167,6 +1172,7 @@
             const thresholdMinutes = nowMinutes - 60; // Moins 1 heure
             
             const activeDayAbs = (appState.absentProfs || []).filter(item => {
+                if (item.prof && item.prof.toLowerCase() === 'total') return false;
                 if (item.estRemplace) return false;
                 if (item.dayName && item.dayName !== currentDayReal) return false;
 
@@ -1240,7 +1246,8 @@
             const totalCountEl = document.getElementById('absent-total-count');
             const filterDayVal = document.getElementById('absent-filter-day').value;
 
-            const allAbs = appState.absentProfs || [];
+            // Exclusion automatique de toute entrée dont le nom est "Total"
+            const allAbs = (appState.absentProfs || []).filter(item => item.prof && item.prof.toLowerCase() !== 'total');
             let filtered = [];
 
             const now = new Date();
