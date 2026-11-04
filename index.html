@@ -15,6 +15,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
+    <!-- SheetJS (xlsx) CDN pour parser les fichiers Excel de profs absents -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
     <!-- Firebase SDKs (Compat) -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
@@ -26,21 +29,18 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* Défilement fluide et rebond natif iOS/Android réactivé */
         html, body, #desktop-matrix-wrapper, .custom-scrollbar {
             -webkit-overflow-scrolling: touch;
         }
 
-        /* Style pour la mise en évidence d'une ligne d'heure cliquée */
         tr.highlighted-row {
-            background-color: #fef08a !important; /* Jaune/Ambre clair */
+            background-color: #fef08a !important;
             transition: background-color 0.2s ease;
         }
         tr.highlighted-row td {
             background-color: #fef08a !important;
         }
 
-        /* Scrollbar moderne */
         .custom-scrollbar::-webkit-scrollbar {
             height: 6px;
             width: 6px;
@@ -57,7 +57,6 @@
             background: #94a3b8;
         }
 
-        /* Hauteur des lignes et ajustement vertical mobile */
         .slot-row {
             height: 48px !important;
         }
@@ -65,7 +64,6 @@
             height: 48px !important;
         }
 
-        /* Ajustement dynamique à 95% pour laisser voir la ligne de séparation */
         .mission-block {
             height: calc(100% - 2px) !important;
             margin: 1px 0;
@@ -83,24 +81,12 @@
             }
         }
 
-        /* Safe Area Padding pour Mobile (iOS/Android) */
-        .pb-safe {
-            padding-bottom: env(safe-area-inset-bottom, 1rem);
-        }
-        .pt-safe {
-            padding-top: env(safe-area-inset-top, 0rem);
-        }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom, 1rem); }
+        .pt-safe { padding-top: env(safe-area-inset-top, 0rem); }
 
-        /* Hide scrollbars for slick mobile horizontal sliders */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* En-tête collant lors du scroll vertical */
         .sticky-header-th {
             position: sticky;
             top: 0;
@@ -115,7 +101,6 @@
             background-color: #e2e8f0;
         }
 
-        /* Optimization pour l'impression A4 Paysage pleine page sans superposition */
         @media print {
             @page {
                 size: A4 landscape;
@@ -130,13 +115,9 @@
                 print-color-adjust: exact !important;
                 overflow: visible !important;
             }
-            .no-print {
-                display: none !important;
-            }
+            .no-print { display: none !important; }
             
-            /* Ajustements de conteneur d'impression */
-            #screen-schedule-container, 
-            .print-full-width {
+            #screen-schedule-container, .print-full-width {
                 width: 100% !important;
                 max-width: 100% !important;
                 margin: 0 !important;
@@ -166,9 +147,7 @@
                 overflow: hidden !important;
             }
 
-            .slot-row, .slot-row td {
-                height: auto !important;
-            }
+            .slot-row, .slot-row td { height: auto !important; }
 
             .mission-block {
                 font-size: 10px !important;
@@ -196,8 +175,7 @@
                 page-break-inside: avoid !important;
             }
 
-            th.min-w-\[120px\], td.min-w-\[120px\],
-            th.sm\:min-w-\[180px\], td.sm\:min-w-\[180px\] {
+            th.min-w-\[120px\], td.min-w-\[120px\], th.sm\:min-w-\[180px\], td.sm\:min-w-\[180px\] {
                 min-width: 0 !important;
             }
 
@@ -231,13 +209,18 @@
 
                 <!-- Actions Bar -->
                 <div class="flex items-center gap-1.5 sm:gap-2">
+                    <button onclick="openSettingsModal()" class="bg-indigo-800/80 hover:bg-indigo-600 text-white p-2 sm:px-3 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1.5" title="Réglages des Seuils CPE">
+                        <i class="fa-solid fa-sliders"></i>
+                        <span class="hidden sm:inline">Réglages</span>
+                    </button>
+
                     <button onclick="openAEDModal()" class="bg-emerald-500 hover:bg-emerald-600 text-white text-xs sm:text-sm px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl font-bold shadow transition flex items-center gap-1.5">
                         <i class="fa-solid fa-user-plus text-xs"></i>
                         <span class="hidden sm:inline">+ Nouvel AED</span>
                         <span class="sm:hidden">AED</span>
                     </button>
 
-                    <!-- Dropdown Options (Menu Trois Petits Points) -->
+                    <!-- Dropdown Options -->
                     <div class="relative group">
                         <button class="bg-indigo-800/80 hover:bg-indigo-600 text-white p-1.5 sm:p-2 rounded-xl text-xs sm:text-sm transition" title="Options">
                             <i class="fa-solid fa-ellipsis-vertical px-1"></i>
@@ -253,6 +236,9 @@
                                 <i class="fa-solid fa-scale-balanced"></i> Équilibre Postes
                             </button>
                             <hr class="my-1 border-slate-100">
+                            <button onclick="openSettingsModal()" class="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2 font-semibold text-indigo-600">
+                                <i class="fa-solid fa-sliders"></i> Réglages Seuils CPE
+                            </button>
                             <button onclick="openIcsExportModal()" class="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2 font-semibold text-indigo-600">
                                 <i class="fa-solid fa-calendar-arrow-down"></i> Exporter Calendrier (.ics)
                             </button>
@@ -294,7 +280,7 @@
         <!-- Section 1: Main Grid Schedule -->
         <section id="section-grid" class="flex flex-col gap-2 sm:gap-4">
             
-            <!-- Controls Bar: Days Selector + Print Mode + CPE Constraints -->
+            <!-- Controls Bar: Days Selector + Print Mode + Profs Absents Actions -->
             <div class="bg-white p-2 sm:p-4 rounded-xl sm:rounded-2xl shadow-sm border border-slate-200/80 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-2 sm:gap-4 no-print">
                 <!-- Days Selector Scrollable horizontal on mobile -->
                 <div class="flex items-center justify-between sm:justify-start gap-1.5 overflow-x-auto no-scrollbar">
@@ -302,10 +288,24 @@
                     <div class="flex gap-1 w-full sm:w-auto" id="day-tabs"></div>
                 </div>
 
-                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <div class="flex flex-wrap items-center gap-2 justify-end">
+                    <!-- Bouton Profs Absents (Affiche le nombre d'absents du jour en temps réel) -->
+                    <button onclick="openAbsentProfsModal()" class="flex items-center gap-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-sm">
+                        <i class="fa-solid fa-user-xmark text-rose-600"></i>
+                        <span>Prof. Absents</span>
+                        <span id="absent-count-badge" class="bg-rose-600 text-white text-[10px] font-black px-1.5 py-0.2 rounded-full">0</span>
+                    </button>
+
+                    <!-- Bouton d'importation Excel / CSV pour Profs Absents -->
+                    <label class="flex items-center gap-1.5 bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer">
+                        <i class="fa-solid fa-file-import text-xs"></i>
+                        <span>Importer Absences</span>
+                        <input type="file" id="import-abs-file" onchange="handleAbsentProfsImport(event)" class="hidden" accept=".xlsx, .xls, .csv">
+                    </label>
+
                     <!-- Bouton rapide d'exportation ICS -->
                     <button onclick="openIcsExportModal()" class="flex items-center justify-center gap-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-3 py-1.5 rounded-xl text-xs font-bold transition">
-                        <i class="fa-solid fa-calendar-arrow-down text-indigo-600"></i> Exporter ICS
+                        <i class="fa-solid fa-calendar-arrow-down text-indigo-600"></i> ICS
                     </button>
 
                     <!-- Option d'impression dédiée -->
@@ -319,35 +319,10 @@
                             Imprimer
                         </button>
                     </div>
-
-                    <!-- Regles CPE Minimale AED -->
-                    <div class="flex items-center justify-between sm:justify-start gap-2 bg-slate-50 border border-slate-200/80 px-2.5 py-1 sm:py-2 rounded-xl text-xs">
-                        <span class="font-bold text-slate-700 flex items-center gap-1 text-[10px] sm:text-xs">
-                            <i class="fa-solid fa-shield-halved text-indigo-600"></i> Seuil CPE :
-                        </span>
-                        <div class="flex items-center gap-2">
-                            <div class="flex items-center gap-1">
-                                <span class="text-[10px] sm:text-[11px] font-medium text-slate-500">Matin:</span>
-                                <div class="flex items-center bg-white border border-slate-300 rounded-lg shadow-sm">
-                                    <button onclick="changeCPEThreshold('minMorning', -1)" class="px-1.5 py-0.5 hover:bg-slate-100 font-bold text-slate-600 text-xs">-</button>
-                                    <span id="cpe-min-morning" class="px-1 font-extrabold text-indigo-700 text-xs">4</span>
-                                    <button onclick="changeCPEThreshold('minMorning', 1)" class="px-1.5 py-0.5 hover:bg-slate-100 font-bold text-slate-600 text-xs">+</button>
-                                </div>
-                            </div>
-                            <div id="cpe-evening-container" class="flex items-center gap-1">
-                                <span class="text-[10px] sm:text-[11px] font-medium text-slate-500">Soir:</span>
-                                <div class="flex items-center bg-white border border-slate-300 rounded-lg shadow-sm">
-                                    <button onclick="changeCPEThreshold('minEvening', -1)" class="px-1.5 py-0.5 hover:bg-slate-100 font-bold text-slate-600 text-xs">-</button>
-                                    <span id="cpe-min-evening" class="px-1.5 font-extrabold text-indigo-700 text-xs">4</span>
-                                    <button onclick="changeCPEThreshold('minEvening', 1)" class="px-1.5 py-0.5 hover:bg-slate-100 font-bold text-slate-600 text-xs">+</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
 
-            <!-- Section Pauses AED (Ultra Compacte) -->
+            <!-- Section Pauses AED -->
             <div id="aed-breaks-bar" class="no-print bg-white px-2.5 py-1.5 rounded-xl border border-slate-200/80 shadow-sm flex flex-wrap items-center justify-between gap-1.5 sm:gap-3 text-xs">
                 <div class="flex items-center gap-1.5 font-bold text-amber-900 flex-shrink-0">
                     <i class="fa-solid fa-mug-hot text-amber-600 text-xs"></i>
@@ -360,7 +335,7 @@
                         <span class="text-[10px] font-extrabold text-amber-900 whitespace-nowrap">11h30</span>
                         <div id="break-list-11h30" class="flex items-center gap-1 flex-wrap"></div>
                         <div class="relative inline-block text-left">
-                            <button onclick="toggleBreakDropdown('11h30')" class="bg-amber-600 hover:bg-amber-700 text-white w-4 h-4 rounded text-[10px] font-bold flex items-center justify-center transition leading-none" title="Ajouter">+ </button>
+                            <button onclick="toggleBreakDropdown('11h30')" class="bg-amber-600 hover:bg-amber-700 text-white w-4 h-4 rounded text-[10px] font-bold flex items-center justify-center transition leading-none" title="Ajouter">+</button>
                             <div id="break-dropdown-11h30" class="hidden absolute right-0 mt-1 w-44 bg-white border border-slate-200 rounded-lg shadow-xl z-30 py-0.5 text-xs"></div>
                         </div>
                     </div>
@@ -478,7 +453,6 @@
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-                <!-- Task Breakdown Table -->
                 <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 shadow-sm p-4 sm:p-5 flex flex-col gap-4">
                     <h3 class="font-bold text-slate-800 text-sm sm:text-base flex items-center gap-2">
                         <i class="fa-solid fa-chart-column text-indigo-600"></i> Cumul Hebdomadaire par Poste
@@ -493,7 +467,6 @@
                     </div>
                 </div>
 
-                <!-- Equity Analysis Diagnostics -->
                 <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-4 sm:p-5 flex flex-col gap-4">
                     <h3 class="font-bold text-slate-800 text-sm sm:text-base flex items-center gap-2">
                         <i class="fa-solid fa-shield-heart text-emerald-600"></i> Diagnostics
@@ -504,6 +477,98 @@
         </section>
 
     </main>
+
+    <!-- Modal: Settings / Seuils CPE -->
+    <div id="settings-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 no-print">
+        <div class="bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden transform transition-all flex flex-col max-h-[90vh]">
+            <div class="bg-indigo-700 px-5 py-4 text-white flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-lg"></i>
+                    <h3 class="font-bold text-base sm:text-lg">Réglages - Seuils CPE</h3>
+                </div>
+                <button onclick="closeSettingsModal()" class="text-indigo-200 hover:text-white p-1 rounded-lg">
+                    <i class="fa-solid fa-xmark text-base"></i>
+                </button>
+            </div>
+
+            <div class="p-5 flex flex-col gap-4 text-xs sm:text-sm overflow-y-auto custom-scrollbar">
+                <p class="text-slate-500 text-xs">Ajustez le nombre d'AEDs minimum requis en début de journée (Matin 08h) et en fin de journée (Soir 17h) pour chaque jour de la semaine.</p>
+                
+                <div class="space-y-3" id="settings-days-list">
+                    <!-- Généré dynamiquement -->
+                </div>
+
+                <div class="flex justify-end gap-2 pt-3 border-t border-slate-100 mt-2">
+                    <button type="button" onclick="closeSettingsModal()" class="px-5 py-2.5 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md">
+                        Enregistrer & Fermer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Professeurs Absents en Temps Réel -->
+    <div id="absent-profs-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 no-print">
+        <div class="bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl max-w-3xl w-full overflow-hidden transform transition-all flex flex-col max-h-[85vh]">
+            <div class="bg-rose-700 px-5 py-4 text-white flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-user-xmark text-lg"></i>
+                    <div>
+                        <h3 class="font-bold text-base sm:text-lg">Professeurs Absents</h3>
+                        <p id="absent-modal-sub" class="text-xs text-rose-200">Suivi des absences importées</p>
+                    </div>
+                </div>
+                <button onclick="closeAbsentProfsModal()" class="text-rose-200 hover:text-white p-1 rounded-lg">
+                    <i class="fa-solid fa-xmark text-base"></i>
+                </button>
+            </div>
+
+            <!-- Onglets de vue : Temps réel, Journée, Semaine -->
+            <div class="bg-slate-100 px-4 pt-3 border-b border-slate-200 flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
+                <div class="flex gap-1.5" id="absent-tabs-container">
+                    <button onclick="setAbsentTab('realtime')" id="absent-tab-realtime" class="px-3 py-2 rounded-t-xl text-xs font-bold transition bg-white text-rose-700 border-t-2 border-rose-600 shadow-xs whitespace-nowrap">
+                        <i class="fa-solid fa-bolt mr-1"></i> Temps réel (-1h)
+                    </button>
+                    <button onclick="setAbsentTab('day')" id="absent-tab-day" class="px-3 py-2 rounded-t-xl text-xs font-semibold transition text-slate-600 hover:bg-slate-200 whitespace-nowrap">
+                        <i class="fa-solid fa-calendar-day mr-1"></i> Journée complète
+                    </button>
+                    <button onclick="setAbsentTab('week')" id="absent-tab-week" class="px-3 py-2 rounded-t-xl text-xs font-semibold transition text-slate-600 hover:bg-slate-200 whitespace-nowrap">
+                        <i class="fa-solid fa-calendar-week mr-1"></i> Semaine entière
+                    </button>
+                </div>
+
+                <button onclick="clearAbsentProfsData()" class="text-[11px] font-bold text-rose-600 hover:text-rose-800 bg-white hover:bg-rose-50 px-2.5 py-1.5 rounded-lg border border-rose-200 transition mb-2 flex-shrink-0">
+                    <i class="fa-solid fa-trash-can mr-1"></i> Vider
+                </button>
+            </div>
+
+            <div class="p-4 sm:p-6 flex flex-col gap-4 overflow-y-auto custom-scrollbar flex-1 bg-slate-50">
+                <!-- Filtre jour (uniquement actif sur l'onglet Journée complète) -->
+                <div id="absent-day-filter-bar" class="hidden items-center gap-2 bg-white p-2.5 rounded-xl border border-slate-200 shadow-xs">
+                    <label class="text-xs font-bold text-slate-600 uppercase">Choisir le jour :</label>
+                    <select id="absent-filter-day" onchange="renderAbsentProfsList()" class="text-xs bg-slate-100 border border-slate-300 rounded-lg px-2.5 py-1.5 font-bold text-slate-700 focus:outline-none">
+                        <option value="Lundi">Lundi</option>
+                        <option value="Mardi">Mardi</option>
+                        <option value="Mercredi">Mercredi</option>
+                        <option value="Jeudi">Jeudi</option>
+                        <option value="Vendredi">Vendredi</option>
+                    </select>
+                </div>
+
+                <!-- Liste des profs absents -->
+                <div id="absent-profs-list-container" class="space-y-2.5">
+                    <!-- Contenu inséré en JS -->
+                </div>
+            </div>
+
+            <div class="bg-white px-5 py-3 border-t border-slate-100 flex justify-between items-center text-xs">
+                <span id="absent-total-count" class="font-bold text-slate-600">Total : 0 absences</span>
+                <button onclick="closeAbsentProfsModal()" class="px-4 py-2 rounded-xl font-bold text-slate-700 bg-slate-200 hover:bg-slate-300 transition">
+                    Fermer
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal: AED Edit / Add -->
     <div id="aed-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto no-print">
@@ -534,7 +599,6 @@
                     </div>
                 </div>
 
-                <!-- Student Checkbox & Custom Contract Hours -->
                 <div class="bg-amber-50/70 border border-amber-200/80 p-3.5 sm:p-4 rounded-xl flex flex-col gap-3">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
@@ -562,7 +626,6 @@
                     </div>
                 </div>
 
-                <!-- Daily Presence Hours Section -->
                 <div class="bg-indigo-50/50 p-3.5 sm:p-4 rounded-xl border border-indigo-100 flex flex-col gap-3">
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-bold uppercase text-indigo-900 tracking-wide flex items-center gap-1.5">
@@ -777,8 +840,11 @@
             cpeConstraints: {},
             aeds: [],
             missions: [],
-            aedBreaks: {} // Structure: { [day]: { '11h30': [aedId, ...], '12h00': [...], '12h30': [...] } }
+            aedBreaks: {},
+            absentProfs: []
         };
+
+        let currentAbsentTab = 'realtime'; // Par défaut sur l'onglet Temps réel (-1h)
 
         function toggleRowHighlight(rowId) {
             const row = document.getElementById(rowId);
@@ -816,11 +882,7 @@
             }
             DAYS.forEach(day => {
                 if (!appState.aedBreaks[day]) {
-                    appState.aedBreaks[day] = {
-                        '11h30': [],
-                        '12h00': [],
-                        '12h30': []
-                    };
+                    appState.aedBreaks[day] = { '11h30': [], '12h00': [], '12h30': [] };
                 } else {
                     if (!appState.aedBreaks[day]['11h30']) appState.aedBreaks[day]['11h30'] = [];
                     if (!appState.aedBreaks[day]['12h00']) appState.aedBreaks[day]['12h00'] = [];
@@ -861,6 +923,7 @@
                     initAedBreaks();
                     if (!appState.aeds) appState.aeds = [];
                     if (!appState.missions) appState.missions = [];
+                    if (!appState.absentProfs) appState.absentProfs = [];
                     localStorage.setItem('aed_timetable_app_v5', JSON.stringify(appState));
                 } else {
                     seedDefaultData();
@@ -883,6 +946,7 @@
                     appState.currentDay = activeDay;
                     initCpeConstraints();
                     initAedBreaks();
+                    if (!appState.absentProfs) appState.absentProfs = [];
                 } else {
                     seedDefaultData();
                 }
@@ -921,12 +985,10 @@
 
             appState.aedBreaks = {};
             DAYS.forEach(day => {
-                appState.aedBreaks[day] = {
-                    '11h30': [],
-                    '12h00': [],
-                    '12h30': []
-                };
+                appState.aedBreaks[day] = { '11h30': [], '12h00': [], '12h30': [] };
             });
+
+            appState.absentProfs = [];
 
             appState.aeds = [
                 { id: 'aed-1', name: 'Sophie MARTIN', contract: 100, isStudent: false, customHours: 40, color: '#4f46e5', presence: JSON.parse(JSON.stringify(defaultPresence)) },
@@ -946,13 +1008,13 @@
         }
 
         function renderAll() {
-            renderCPEValues();
             renderDayTabs();
             renderBreaksBar();
             renderMatrix();
             renderAEDCards();
             renderEquityDashboard();
             updateBadges();
+            updateAbsentProfsBadge();
         }
 
         window.onload = function() {
@@ -961,7 +1023,6 @@
             renderPresenceFormFields();
             initFirebaseSync();
 
-            // Intercepter la date du prochain lundi par défaut
             const today = new Date();
             const dayOfWeek = today.getDay();
             const daysUntilMonday = (1 + 7 - dayOfWeek) % 7;
@@ -971,7 +1032,6 @@
             const dateInput = document.getElementById('ics-start-date');
             if (dateInput) dateInput.value = dateStr;
 
-            // Fermer les menus déroulants lors d'un clic à l'extérieur
             document.addEventListener('click', function(e) {
                 if (!e.target.closest('.relative')) {
                     ['11h30', '12h00', '12h30'].forEach(timeSlot => {
@@ -982,7 +1042,352 @@
             });
         };
 
-        /* Export iCal / .ics (Postes et missions uniquement, sans les blocs généraux "Service Vie Scolaire") */
+        /* Gestion des Professeurs Absents */
+        function getExcelFieldValue(row, candidates) {
+            for (let key of Object.keys(row)) {
+                const normKey = key.trim().toLowerCase();
+                for (let cand of candidates) {
+                    if (normKey === cand.toLowerCase()) {
+                        return row[key];
+                    }
+                }
+            }
+            return '';
+        }
+
+        function handleAbsentProfsImport(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const data = new Uint8Array(evt.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const rawJson = XLSX.utils.sheet_to_json(worksheet);
+
+                    const parsedAbsences = [];
+                    const dayNamesMap = { 1: 'Lundi', 2: 'Mardi', 3: 'Mercredi', 4: 'Jeudi', 5: 'Vendredi' };
+
+                    rawJson.forEach(row => {
+                        const prof = getExcelFieldValue(row, ['professeur', 'prof', 'nom']);
+                        const matiere = getExcelFieldValue(row, ['matière', 'matiere', 'discipline']);
+                        const classe = getExcelFieldValue(row, ['classe', 'classes', 'groupe', 'groupes']);
+                        const duree = getExcelFieldValue(row, ['durée', 'duree']);
+                        const rawDate = getExcelFieldValue(row, ['date']);
+                        const debut = getExcelFieldValue(row, ['début', 'debut', 'heure']);
+                        
+                        const remplaçant = getExcelFieldValue(row, ['remplacement', 'remplaçant', 'remplacant', 'prof remplaçant']);
+                        const statut = String(getExcelFieldValue(row, ['statut', 'remarque']) || '').toLowerCase();
+                        
+                        const estRemplace = (String(remplaçant).trim() !== '' && String(remplaçant).trim() !== '-') ||
+                                            statut.includes('remplacé') || 
+                                            statut.includes('cours assuré');
+
+                        let dateFormatted = rawDate;
+                        let dayName = '';
+
+                        if (rawDate) {
+                            if (typeof rawDate === 'number') {
+                                const parsedDate = XLSX.SSF.parse_date_code(rawDate);
+                                if (parsedDate) {
+                                    const jsDate = new Date(parsedDate.y, parsedDate.m - 1, parsedDate.d);
+                                    dateFormatted = `${parsedDate.d.toString().padStart(2, '0')}/${parsedDate.m.toString().padStart(2, '0')}/${parsedDate.y}`;
+                                    dayName = dayNamesMap[jsDate.getDay()] || '';
+                                }
+                            } else {
+                                const dObj = new Date(rawDate);
+                                if (!isNaN(dObj.getTime())) {
+                                    dayName = dayNamesMap[dObj.getDay()] || '';
+                                } else if (typeof rawDate === 'string') {
+                                    const rawLower = rawDate.toLowerCase();
+                                    for (let dayVal of DAYS) {
+                                        if (rawLower.includes(dayVal.toLowerCase())) {
+                                            dayName = dayVal;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        if (prof) {
+                            parsedAbsences.push({ 
+                                prof: String(prof).trim(), 
+                                matiere: String(matiere).trim(), 
+                                classe: String(classe).trim(), 
+                                duree: String(duree).trim(), 
+                                date: String(dateFormatted).trim(), 
+                                debut: String(debut).trim(), 
+                                dayName, 
+                                remplacant: String(remplaçant).trim(),
+                                estRemplace 
+                            });
+                        }
+                    });
+
+                    appState.absentProfs = parsedAbsences;
+                    saveState();
+                    updateAbsentProfsBadge();
+                    showToast(`${parsedAbsences.length} absences de professeurs importées.`);
+                    openAbsentProfsModal();
+                } catch (err) {
+                    console.error(err);
+                    alert("Erreur lors de la lecture du fichier d'absences.");
+                }
+            };
+            reader.readAsArrayBuffer(file);
+            e.target.value = '';
+        }
+
+        // Fonction robuste de conversion des heures textuelles (ex: "08h00", "8h", "08:00") en minutes
+        function timeToMinutes(timeStr) {
+            if (!timeStr) return 0;
+            let clean = String(timeStr).toLowerCase().trim();
+            // Remplacer 'h' par ':' pour uniformiser
+            clean = clean.replace('h', ':').replace(' ', '');
+            if (!clean.includes(':')) {
+                clean += ':00';
+            }
+            const parts = clean.split(':');
+            const h = parseInt(parts[0], 10) || 0;
+            const m = parseInt(parts[1], 10) || 0;
+            return (h * 60) + m;
+        }
+
+        function updateAbsentProfsBadge() {
+            const badge = document.getElementById('absent-count-badge');
+            if (!badge) return;
+
+            const now = new Date();
+            const currentDayReal = getCurrentDayName();
+            const nowMinutes = (now.getHours() * 60) + now.getMinutes();
+            const thresholdMinutes = nowMinutes - 60; // Moins 1 heure
+            
+            const activeDayAbs = (appState.absentProfs || []).filter(item => {
+                if (item.estRemplace) return false;
+                if (item.dayName && item.dayName !== currentDayReal) return false;
+
+                if (item.debut) {
+                    const startM = timeToMinutes(item.debut);
+                    if (startM > 0 && startM < thresholdMinutes) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+
+            badge.textContent = activeDayAbs.length;
+        }
+
+        function openAbsentProfsModal() {
+            const modal = document.getElementById('absent-profs-modal');
+            const dayLabel = document.getElementById('absent-current-day-label');
+            if (dayLabel) dayLabel.textContent = appState.currentDay;
+            
+            const selectFilter = document.getElementById('absent-filter-day');
+            if (selectFilter) selectFilter.value = appState.currentDay;
+
+            setAbsentTab('realtime');
+            modal.classList.remove('hidden');
+        }
+
+        function closeAbsentProfsModal() {
+            document.getElementById('absent-profs-modal').classList.add('hidden');
+        }
+
+        function setAbsentTab(tab) {
+            currentAbsentTab = tab;
+            
+            const btnRealtime = document.getElementById('absent-tab-realtime');
+            const btnDay = document.getElementById('absent-tab-day');
+            const btnWeek = document.getElementById('absent-tab-week');
+            const filterBar = document.getElementById('absent-day-filter-bar');
+
+            [btnRealtime, btnDay, btnWeek].forEach(b => {
+                if(b) {
+                    b.className = "px-3 py-2 rounded-t-xl text-xs font-semibold transition text-slate-600 hover:bg-slate-200 whitespace-nowrap";
+                }
+            });
+
+            if (tab === 'realtime' && btnRealtime) {
+                btnRealtime.className = "px-3 py-2 rounded-t-xl text-xs font-bold transition bg-white text-rose-700 border-t-2 border-rose-600 shadow-xs whitespace-nowrap";
+                if(filterBar) {
+                    filterBar.classList.add('hidden');
+                    filterBar.classList.remove('flex');
+                }
+            } else if (tab === 'day' && btnDay) {
+                btnDay.className = "px-3 py-2 rounded-t-xl text-xs font-bold transition bg-white text-rose-700 border-t-2 border-rose-600 shadow-xs whitespace-nowrap";
+                if(filterBar) {
+                    filterBar.classList.remove('hidden');
+                    filterBar.classList.add('flex');
+                }
+            } else if (tab === 'week' && btnWeek) {
+                btnWeek.className = "px-3 py-2 rounded-t-xl text-xs font-bold transition bg-white text-rose-700 border-t-2 border-rose-600 shadow-xs whitespace-nowrap";
+                if(filterBar) {
+                    filterBar.classList.add('hidden');
+                    filterBar.classList.remove('flex');
+                }
+            }
+
+            renderAbsentProfsList();
+        }
+
+        function renderAbsentProfsList() {
+            const container = document.getElementById('absent-profs-list-container');
+            const totalCountEl = document.getElementById('absent-total-count');
+            const filterDayVal = document.getElementById('absent-filter-day').value;
+
+            const allAbs = appState.absentProfs || [];
+            let filtered = [];
+
+            const now = new Date();
+            const currentDayReal = getCurrentDayName();
+            const nowMinutes = (now.getHours() * 60) + now.getMinutes();
+            const thresholdMinutes = nowMinutes - 60; // Seuil à -1 heure
+
+            if (currentAbsentTab === 'realtime') {
+                filtered = allAbs.filter(item => {
+                    if (item.estRemplace) return false;
+                    if (item.dayName && item.dayName !== currentDayReal) return false;
+
+                    if (item.debut) {
+                        const startM = timeToMinutes(item.debut);
+                        if (startM > 0 && startM < thresholdMinutes) {
+                            return false; // Masqué car l'heure de début est dépassée de plus d'une heure
+                        }
+                    }
+                    return true;
+                });
+            } else if (currentAbsentTab === 'day') {
+                filtered = allAbs.filter(item => {
+                    if (item.dayName && item.dayName !== filterDayVal) return false;
+                    return true;
+                });
+            } else if (currentAbsentTab === 'week') {
+                filtered = allAbs;
+            }
+
+            filtered.sort((a, b) => {
+                const timeA = a.debut ? timeToMinutes(a.debut) : 0;
+                const timeB = b.debut ? timeToMinutes(b.debut) : 0;
+                return timeA - timeB;
+            });
+
+            if (totalCountEl) {
+                const tabTitles = { 
+                    realtime: `Temps réel (Jour : ${currentDayReal}, à partir de -1h)`, 
+                    day: `Journée complète (${filterDayVal})`, 
+                    week: 'Semaine entière' 
+                };
+                totalCountEl.textContent = `${filtered.length} absence(s) affichée(s) — Mode : ${tabTitles[currentAbsentTab]}`;
+            }
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="p-8 text-center text-slate-400 font-medium bg-white rounded-xl border border-dashed border-slate-200">
+                        <i class="fa-solid fa-folder-open text-2xl mb-2 text-slate-300"></i>
+                        <p>Aucun professeur absent trouvé pour cette sélection.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filtered.map(abs => `
+                <div class="bg-white border ${abs.estRemplace ? 'border-emerald-200 bg-emerald-50/20' : 'border-slate-200/90 hover:border-rose-300'} p-3 rounded-xl shadow-xs flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 transition">
+                    <div class="flex items-start gap-2.5">
+                        <div class="p-2 ${abs.estRemplace ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-50 text-rose-600'} rounded-lg font-bold text-xs flex-shrink-0 mt-0.5">
+                            <i class="fa-solid ${abs.estRemplace ? 'fa-user-check' : 'fa-user-slash'}"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="font-extrabold text-slate-800 text-sm">${escapeHtml(abs.prof)}</span>
+                                ${abs.matiere ? `<span class="px-2 py-0.5 text-[10px] font-bold bg-slate-100 text-slate-600 rounded-md">${escapeHtml(abs.matiere)}</span>` : ''}
+                                ${abs.estRemplace ? `<span class="px-2 py-0.5 text-[10px] font-extrabold bg-emerald-100 text-emerald-800 rounded-md border border-emerald-200">Remplacé ${abs.remplacant ? 'par ' + escapeHtml(abs.remplacant) : ''}</span>` : ''}
+                            </div>
+                            <div class="flex items-center gap-3 text-xs text-slate-500 mt-1 flex-wrap">
+                                ${abs.classe ? `<span><strong class="text-slate-700">Classe :</strong> ${escapeHtml(abs.classe)}</span>` : ''}
+                                ${abs.duree ? `<span><strong class="text-slate-700">Durée :</strong> ${escapeHtml(abs.duree)}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex sm:flex-col items-end justify-between w-full sm:w-auto border-t sm:border-0 border-slate-100 pt-1.5 sm:pt-0 text-right text-xs">
+                        <div class="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded text-[11px]">
+                            ${abs.debut ? `Début : ${escapeHtml(abs.debut)}` : 'Horaire N.R.'}
+                        </div>
+                        <span class="text-[10px] text-slate-400 font-medium mt-0.5">${abs.dayName ? abs.dayName + ' ' : ''}${abs.date || ''}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function clearAbsentProfsData() {
+            if (confirm("Voulez-vous réinitialiser et vider toute la liste des professeurs absents ?")) {
+                appState.absentProfs = [];
+                saveState();
+                updateAbsentProfsBadge();
+                renderAbsentProfsList();
+                showToast("Liste des professeurs absents vidée.");
+            }
+        }
+
+        /* Modal Réglages CPE */
+        function openSettingsModal() {
+            initCpeConstraints();
+            const container = document.getElementById('settings-days-list');
+            
+            container.innerHTML = DAYS.map(day => {
+                const c = appState.cpeConstraints[day] || { minMorning: 4, minEvening: 4 };
+                return `
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 flex items-center justify-between">
+                        <span class="font-bold text-slate-800 text-xs sm:text-sm w-24">${day}</span>
+                        <div class="flex items-center gap-4">
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-xs text-slate-500 font-medium">Matin:</span>
+                                <div class="flex items-center bg-white border border-slate-300 rounded-lg shadow-sm">
+                                    <button onclick="updateSettingsCPE('${day}', 'minMorning', -1)" class="px-2 py-0.5 font-bold text-slate-600 hover:bg-slate-100 text-xs">-</button>
+                                    <span id="set-morning-${day}" class="px-2 font-extrabold text-indigo-700 text-xs">${c.minMorning}</span>
+                                    <button onclick="updateSettingsCPE('${day}', 'minMorning', 1)" class="px-2 py-0.5 font-bold text-slate-600 hover:bg-slate-100 text-xs">+</button>
+                                </div>
+                            </div>
+                            
+                            ${day !== 'Mercredi' ? `
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-xs text-slate-500 font-medium">Soir:</span>
+                                <div class="flex items-center bg-white border border-slate-300 rounded-lg shadow-sm">
+                                    <button onclick="updateSettingsCPE('${day}', 'minEvening', -1)" class="px-2 py-0.5 font-bold text-slate-600 hover:bg-slate-100 text-xs">-</button>
+                                    <span id="set-evening-${day}" class="px-2 font-extrabold text-indigo-700 text-xs">${c.minEvening}</span>
+                                    <button onclick="updateSettingsCPE('${day}', 'minEvening', 1)" class="px-2 py-0.5 font-bold text-slate-600 hover:bg-slate-100 text-xs">+</button>
+                                </div>
+                            </div>
+                            ` : '<span class="text-[10px] text-slate-400 italic">Pas de cours l\'aprem</span>'}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('settings-modal').classList.remove('hidden');
+        }
+
+        function updateSettingsCPE(day, type, val) {
+            initCpeConstraints();
+            if (!appState.cpeConstraints[day]) appState.cpeConstraints[day] = { minMorning: 4, minEvening: 4 };
+            appState.cpeConstraints[day][type] = Math.max(0, (appState.cpeConstraints[day][type] || 0) + val);
+            saveState();
+            
+            const el = document.getElementById(type === 'minMorning' ? `set-morning-${day}` : `set-evening-${day}`);
+            if (el) el.textContent = appState.cpeConstraints[day][type];
+            renderMatrix();
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settings-modal').classList.add('hidden');
+        }
+
+        /* Export iCal / .ics */
         function openIcsExportModal() {
             const modal = document.getElementById('ics-modal');
             const select = document.getElementById('ics-aed-select');
@@ -1016,15 +1421,7 @@
             if (!aed) return;
 
             const startDate = new Date(startDateVal);
-            
-            // Mapper les jours de la semaine aux indices de décalage par rapport au lundi
-            const dayOffsets = {
-                'Lundi': 0,
-                'Mardi': 1,
-                'Mercredi': 2,
-                'Jeudi': 3,
-                'Vendredi': 4
-            };
+            const dayOffsets = { 'Lundi': 0, 'Mardi': 1, 'Mercredi': 2, 'Jeudi': 3, 'Vendredi': 4 };
 
             let icsContent = [
                 'BEGIN:VCALENDAR',
@@ -1049,20 +1446,17 @@
                 return `${yyyy}${mm}${dd}T${hh}${min}${ss}`;
             };
 
-            // Génération sur 40 semaines continues (sans exclusion de vacances)
             const numWeeks = 40;
 
             for (let w = 0; w < numWeeks; w++) {
                 const weekStartDate = new Date(startDate);
                 weekStartDate.setDate(startDate.getDate() + (w * 7));
 
-                // Pour chaque jour de la semaine
                 DAYS.forEach(day => {
                     const offset = dayOffsets[day];
                     const dayDate = new Date(weekStartDate);
                     dayDate.setDate(weekStartDate.getDate() + offset);
 
-                    // Ajouter uniquement les missions/postes spécifiques attribués pour ce jour
                     const dayMissions = (appState.missions || []).filter(m => m.aedId === aed.id && m.day === day);
                     dayMissions.forEach(m => {
                         const dtStart = formatICSDate(dayDate, m.startTime);
@@ -1092,7 +1486,7 @@
             document.body.removeChild(link);
 
             closeIcsExportModal();
-            showToast(`Planning .ics (postes spécifiques) exporté pour ${aed.name}`);
+            showToast(`Planning .ics exporté pour ${aed.name}`);
         }
 
         /* Gestion des Pauses des AEDs */
@@ -1100,7 +1494,6 @@
             initAedBreaks();
             const dayBreaks = appState.aedBreaks[appState.currentDay] || { '11h30': [], '12h00': [], '12h30': [] };
             
-            // Récupérer les AEDs présents le jour sélectionné
             const activeAeds = (appState.aeds || []).filter(aed => 
                 aed.presence && aed.presence[appState.currentDay] && aed.presence[appState.currentDay].active
             );
@@ -1112,7 +1505,6 @@
 
                 const assignedAedIds = dayBreaks[timeSlot] || [];
 
-                // Affichage des badges AEDs en pause (rendu compact)
                 if (assignedAedIds.length === 0) {
                     listEl.innerHTML = `<span class="text-[9px] text-slate-400 italic">Aucun</span>`;
                 } else {
@@ -1130,7 +1522,6 @@
                     }).join('');
                 }
 
-                // Génération des éléments du menu déroulant (AEDs non encore affectés à cet horaire)
                 const availableAeds = activeAeds.filter(aed => !assignedAedIds.includes(aed.id));
                 if (availableAeds.length === 0) {
                     dropdownEl.innerHTML = `<div class="px-2.5 py-1 text-[10px] text-slate-400 font-medium">Aucun dispo</div>`;
@@ -1183,7 +1574,7 @@
             }
         }
 
-        /* Mise à jour des Badges Portail & Permanence */
+        /* Badges Portail & Permanence */
         function updateBadges() {
             const portailBadge = document.getElementById('realtime-portail-status');
             const permanenceBadge = document.getElementById('realtime-permanence-status');
@@ -1242,34 +1633,6 @@
             }
         }
 
-        function renderCPEValues() {
-            initCpeConstraints();
-            const dayConstraints = appState.cpeConstraints[appState.currentDay] || { minMorning: 4, minEvening: 4 };
-            document.getElementById('cpe-min-morning').textContent = dayConstraints.minMorning;
-
-            const eveningContainer = document.getElementById('cpe-evening-container');
-            const eveningVal = document.getElementById('cpe-min-evening');
-
-            if (appState.currentDay === 'Mercredi') {
-                if (eveningContainer) eveningContainer.classList.add('hidden');
-            } else {
-                if (eveningContainer) eveningContainer.classList.remove('hidden');
-                if (eveningVal) eveningVal.textContent = dayConstraints.minEvening;
-            }
-        }
-
-        function changeCPEThreshold(type, val) {
-            initCpeConstraints();
-            const day = appState.currentDay;
-            if (!appState.cpeConstraints[day]) {
-                appState.cpeConstraints[day] = { minMorning: 4, minEvening: 4 };
-            }
-            appState.cpeConstraints[day][type] = Math.max(0, (appState.cpeConstraints[day][type] || 0) + val);
-            saveState();
-            renderCPEValues();
-            renderMatrix();
-        }
-
         function switchMainTab(tab) {
             const gridSec = document.getElementById('section-grid');
             const aedSec = document.getElementById('section-aed');
@@ -1312,6 +1675,7 @@
             renderDayTabs();
             renderBreaksBar();
             renderMatrix();
+            updateAbsentProfsBadge();
         }
 
         function populateSlotDropdowns() {
@@ -1368,12 +1732,6 @@
             return false;
         }
 
-        function timeToMinutes(timeStr) {
-            if (!timeStr) return 0;
-            const [h, m] = timeStr.split(':').map(Number);
-            return (h * 60) + m;
-        }
-
         function generateDayScheduleHTML(targetDay, isPrint = false) {
             const activeAedsForDay = (appState.aeds || []).filter(aed => 
                 aed.presence && aed.presence[targetDay] && aed.presence[targetDay].active
@@ -1383,7 +1741,6 @@
                 return '<div class="p-8 text-center text-slate-500 font-medium">Aucun AED de service ce jour-là.</div>';
             }
 
-            // En-tête avec positionnement sticky
             let headerHTML = `
                 <th class="p-1 sm:p-3 w-20 sm:w-44 sticky-corner-th font-bold text-slate-700 uppercase tracking-wider text-[9px] sm:text-xs border-r border-b border-slate-300 shadow-sm">
                     Créneaux / AED
@@ -1502,12 +1859,10 @@
         }
 
         function renderMatrix() {
-            renderCPEValues();
             const headerRow = document.getElementById('matrix-header-row');
             const tbody = document.getElementById('matrix-body');
             const warningBox = document.getElementById('no-aed-warning');
             const alertsBar = document.getElementById('cpe-alerts-bar');
-            
             const desktopWrapper = document.getElementById('desktop-matrix-wrapper');
 
             const activeAeds = (appState.aeds || []).filter(aed => 
@@ -1857,7 +2212,6 @@
                 appState.aeds = (appState.aeds || []).filter(a => a.id !== id);
                 appState.missions = (appState.missions || []).filter(m => m.aedId !== id);
                 
-                // Nettoyer les pauses associées à cet AED
                 if (appState.aedBreaks) {
                     DAYS.forEach(day => {
                         if (appState.aedBreaks[day]) {
@@ -2060,6 +2414,7 @@
                         appState = data;
                         initCpeConstraints();
                         initAedBreaks();
+                        if (!appState.absentProfs) appState.absentProfs = [];
                         saveState();
                         showToast("Données importées avec succès.");
                     } else {
